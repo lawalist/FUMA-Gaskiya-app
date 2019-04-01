@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NavController, NavParams, LoadingController, AlertController, ToastController, IonicPage } from 'ionic-angular';
+import { NavController, NavParams, Platform, LoadingController, AlertController, ToastController, IonicPage } from 'ionic-angular';
 //import { ModifierChampsPage } from '../modifier-champs/modifier-champs';
 import { PouchdbProvider } from '../../../providers/pouchdb-provider';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,6 +8,7 @@ import { Storage } from '@ionic/storage';
 import { Validators, FormBuilder, FormGroup } from '@angular/forms';
 import { Geolocation } from '@ionic-native/geolocation';
 import { global } from '../../../global-variables/variable';
+import { Diagnostic } from '@ionic-native/diagnostic/ngx';
 
 /*
   Generated class for the DetailChamps page.
@@ -32,7 +33,8 @@ export class DetailChampsPage {
   membre: any;
   champID: any;
   appartenance: any = '';
-  appartenances: any = ['Mien', 'Prêt', 'Location']
+  appartenances: any = ['Achât', 'Donnation', 'Gage', 'Héritage', 'Location', 'Prêt'];
+
 
 
   champsForm: any;
@@ -55,7 +57,7 @@ export class DetailChampsPage {
   global:any = global;
 
 
-   constructor(public servicePouchdb: PouchdbProvider, public loadingCtl: LoadingController, public geolocation: Geolocation, public formBuilder: FormBuilder, public toastCtl: ToastController, public navCtrl: NavController, public navParams: NavParams, public alertCtl: AlertController) {
+   constructor(public servicePouchdb: PouchdbProvider, public platform: Platform, public diagnostic: Diagnostic, public loadingCtl: LoadingController, public geolocation: Geolocation, public formBuilder: FormBuilder, public toastCtl: ToastController, public navCtrl: NavController, public navParams: NavParams, public alertCtl: AlertController) {
     this.champ = this.navParams.data.champ;
     this.membre = this.navParams.data.membre;
     this.champID = this.champ._id;
@@ -171,10 +173,53 @@ export class DetailChampsPage {
     toast.present();
   }
 
-
     getPosition(){
+      this.msg('Obtention des coordonnées en cours...');
+        this.geolocation.getCurrentPosition({enableHighAccuracy: true, maximumAge: 30000, timeout: 30000 }).then((resp) => {
+            this.longitude = resp.coords.longitude;
+            this.latitude = resp.coords.latitude;
+            this.msg('Coordonnées obtenues avec succes!')
+        }, err => {
+            this.msg('Une erreur c\'est produite lors de l\obtention des coordonnées. \nVeuillez reéssayer plus tard!')
+            console.log('')
+        });
+
+      /*if(this.platform.is('android')){
+        this.diagnostic.isLocationEnabled().then((enabled) => {
+            console.log("Le GPS est "+(enabled ? "activié" : "désactivé"));
+            if(!enabled){
+                this.diagnostic.switchToLocationSettings();
+            }else {
+                this.msg('Obtention des coordonnées en cours...');
+                this.geolocation.getCurrentPosition({enableHighAccuracy: true, maximumAge: 30000, timeout: 30000 }).then((resp) => {
+                    this.longitude = resp.coords.longitude;
+                    this.latitude = resp.coords.latitude;
+                    this.msg('Coordonnées obtenues avec succes!')
+                }, err => {
+                    this.msg('Une erreur c\'est produite lors de l\obtention des coordonnées. \nVeuillez reéssayer plus tard!')
+                    console.log('')
+                });
+            }
+        }).catch((err) => {
+            alert("Erreur: "+err)
+        })
+      }else{
+        this.msg('Obtention des coordonnées en cours...');
+        this.geolocation.getCurrentPosition({enableHighAccuracy: true, maximumAge: 30000, timeout: 30000 }).then((resp) => {
+            this.longitude = resp.coords.longitude;
+            this.latitude = resp.coords.latitude;
+            this.msg('Coordonnées obtenues avec succes!')
+        }, err => {
+            this.msg('Une erreur c\'est produite lors de l\obtention des coordonnées. \nVeuillez reéssayer plus tard!')
+            console.log('')
+        });
+      }*/
+        
+    }
+
+    /*getPosition(){
     this.msg('Obtention des coordonnées en cours...');
-    this.geolocation.getCurrentPosition().then((resp) => {
+    this.geolocation.getCurrentPosition({enableHighAccuracy: true, maximumAge: 30000, timeout: 30000 }).then((resp) => {
       this.longitude = resp.coords.longitude;
       this.latitude = resp.coords.latitude;
       this.msg('Coordonnées obtenues avec succes!')
@@ -182,7 +227,7 @@ export class DetailChampsPage {
       this.msg('Une erreur c\'est produite lors de l\obtention des coordonnées. \nVeuillez reéssayer plus tard!')
       console.log('')
     });
-  }
+  }*/
 
   generateId(matricule){
     var chars='ABCDEFGHIJKLMNPQRSTUVWYZ'
@@ -212,15 +257,22 @@ export class DetailChampsPage {
     this.champs.appartenance = champ.appartenance;
     this.champs.type_sole = champ.type_sole;
     this.champs.matricule_producteur = champ.matricule_producteur;
-    this.champs.nom_producteur = champ.nom_producteur;
+    this.champs.nom_producteur = champ.nom_producteur; 
+/*
+    champs.matricule_producteur = this.selectedProducteur.data.matricule_Membre; 
+    champs.code_union = this.selectedProducteur.data.code_union;
+    champs.code_op = this.selectedProducteur.data.code_op;
+    champs.surnom_producteur = this.selectedProducteur.data.surnom_Membre;
+    */
     
-    if(this.membre && this.membre != {}){
+    
+    /*if(this.membre && this.membre != {}){
       this.champs.surnom_producteur = this.membre.data.surnom_Membre;
       this.champs.code_union = this.membre.data.code_union;
     }else{
       this.champs.surnom_producteur = champ.surnom_producteur;
       this.champs.code_union = champ.code_union;
-    }
+    }*/
     
     
       this.grandChamps.data = this.champs;

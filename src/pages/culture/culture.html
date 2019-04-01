@@ -168,6 +168,8 @@
               <ion-row> <ion-col class='meta-key'><strong>code variable:</strong></ion-col> <ion-col class='meta-value'> {{variable.code_variable}} </ion-col> </ion-row>
               <ion-row> <ion-col class='meta-key'><strong>Nom variable:</strong></ion-col> <ion-col class='meta-value'> {{variable.nom_variable}} </ion-col> </ion-row>
               <ion-row> <ion-col class='meta-key'><strong>Type variable:</strong></ion-col> <ion-col class='meta-value'> {{variable.type_variable}} </ion-col> </ion-row>
+              <ion-row *ngIf="variable.type_variable == 'choix' || variable.type_variable == 'choix_multiple'"> <ion-col class='meta-key'><strong>Liste de choix:</strong></ion-col> <ion-col class='meta-value'> {{variable.choix_variable}} </ion-col> </ion-row>
+
               <ion-row> <ion-col class='meta-key'><strong>Unité:</strong></ion-col> <ion-col class='meta-value'> {{variable.unite}} </ion-col> </ion-row>
               <ion-row> <ion-col class='meta-key'><strong>Est obligatoire:</strong></ion-col> <ion-col class='meta-value'> {{variable.est_obligatoire}} </ion-col> </ion-row>
               <ion-row> <ion-col class='meta-key'><strong>Description :</strong></ion-col> <ion-col class='meta-value'> {{variable.description_variable}} </ion-col> </ion-row>
@@ -238,7 +240,9 @@
                         <ion-list>
                             <ion-item class="message">
                                 <h2>Variable {{i + 1}}</h2>
-                              <button ion-button *ngIf="cultureForm.controls.variables.controls.length > 1" class="error-box" (click)="removeVariable(i)" clear icon-only item-right><ion-icon name="trash"></ion-icon></button>
+                              <button ion-button *ngIf="cultureForm.controls.variables.controls.length > 1 && i > 0" class="error-box" (click)="upVariable(i)" clear icon-only item-right><ion-icon name="arrow-up"></ion-icon></button>
+                              <button ion-button *ngIf="cultureForm.controls.variables.controls.length > 1 && i < (cultureForm.controls.variables.controls.length - 1)" class="error-box" (click)="downVariable(i)" clear icon-only item-right><ion-icon name="arrow-down"></ion-icon></button>
+                              <button ion-button class="error-box" (click)="removeVariable(i)" clear icon-only item-right><ion-icon name="trash"></ion-icon></button>
                             </ion-item>
                           </ion-list>
                     </ion-card-header>
@@ -259,10 +263,16 @@
             </a>
           </div>
       <br>
-      <button ion-button type="submit" color="my_secondary" [disabled]="!cultureForm.valid" block>Sauvegarder</button>
+      <ion-row>
+        <ion-col>
+          <button ion-button type="submit" color="my_secondary" [disabled]="!cultureForm.valid" block>Sauvegarder</button>
+        </ion-col>
+        <ion-col>
+          <button ion-button color="my_primary" block (click)="annuler()">Fermer</button>
+        </ion-col>
+      </ion-row>
     </form>
-    <button ion-button color="my_primary" block (click)="annuler()">Fermer</button>
-  
+
   </div>
   
   <ion-fab bottom right *ngIf="!ajoutForm &&!detailCulture && selectedStyle != 'tableau' && ((user && user.roles && global.estAnimataire(user.roles)) || estAnimataire)" bottom>

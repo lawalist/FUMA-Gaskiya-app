@@ -50,14 +50,14 @@
         <div style="padding-left: 15px;" class="error-box" *ngIf="registerForm.controls['nom'].hasError('required') && registerForm.controls['nom'].touched">* Le nom est obligatoir</div>
  
         <ion-item>
-          <ion-label><ion-icon name="person" class="error-box"></ion-icon></ion-label>
+          <ion-label><ion-icon name="person"></ion-icon></ion-label>
           <!--ion-input [(ngModel)]="email" placeholder="Email" type="email"></ion-input-->
           <ion-input type="text" formControlName="prenom" [(ngModel)]="prenom" placeholder="Prénom"></ion-input>
         </ion-item>
         <div style="padding-left: 15px;" class="error-box" *ngIf="registerForm.controls['prenom'].hasError('required') && registerForm.controls['prenom'].touched">* le prénom est obligatoir!</div>
  
         <ion-item>
-          <ion-label floating>{{'SEX' | translate}}<span class="error-box">*</span></ion-label>
+          <ion-label floating>{{'SEX' | translate}}</ion-label>
           <ion-select formControlName="sex" [(ngModel)]="sex"  cancelText="Annuler" okText="Ok">
             <ion-option value="" selected disabled>{{'SELECTIONNEZSEX' | translate}}</ion-option>
             <ion-option *ngIf="l == 'fr'" value="H" >Homme</ion-option>

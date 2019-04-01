@@ -12,7 +12,7 @@ import { Device } from '@ionic-native/device';
 import { Sim } from '@ionic-native/sim';
 import { Camera, CameraOptions } from '@ionic-native/camera';
 import { ImagePicker } from '@ionic-native/image-picker';
-import { File, FileReader } from '@ionic-native/file';
+import { File } from '@ionic-native/file';
 import JsBarcode from 'jsbarcode';
 import * as FileSaver from 'file-saver';
 import PouchDB from 'pouchdb';
@@ -51,11 +51,12 @@ export class MembresPage {
   nom_op: any;
   code_op: any;
   code_union: any;
+  nom_union: any;
   aProfile: boolean = false;
   typeRecherche: any = 'matricule';
   selectedLimit: any = 10;
   limits: any = [10, 25, 50, 100, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 'Tous'];
-  recherche: any = global.config_app.code_structure+'-';
+  recherche: any;
 
   membreForm: any;
   villages: any = [];
@@ -134,6 +135,7 @@ export class MembresPage {
   ancien_nom_op: any;
   ancien_code_op: any;
   ancien_code_union: any;
+  ancien_nom_union: any;
   generate: boolean = false;
   photoID: any;
   photoRev: any;
@@ -147,16 +149,35 @@ export class MembresPage {
   refresher: any = '';
   getPhotoOk: boolean = false;
   copie_db: any;
-
+  indexSelectedVillage: number;
+  barcodeMembre: any;
+  colonnes: any = ["matricule", "nom", "surnom", "sex", "date_naissance", "nom_OP", "code_OP", "nom_union","code_union", "pays_nom", "region_nom", "departement_nom", "commune_nom", "village_nom"]
+  allColonnes: any = [{"code": "matricule", "nom": "Matricule"}, {"code": "nom", "nom": "Nom"}, {"code": "surnom", "nom": "Surnom"}, {"code": "sex", "nom": "Sex"}, {"code": "date_naissance", "nom": "Date de naissance"}, 
+                      {"code": "nom_OP", "nom": "Nom OP"}, {"code": "code_OP", "nom": "Code OP"}, {"code": "op", "nom": "Num. agg. OP"}, {"code": "nom_union", "nom": "Nom union"}, {"code": "code_union", "nom": "Code union"}, 
+                      {"code": "pays", "nom": "ID Pays"}, {"code": "pays_nom", "nom": "Nom pays"}, {"code": "region", "nom": "ID région"}, {"code": "region_nom", "nom": "Nom région"}, 
+                      {"code": "departement", "nom": "ID departement"}, {"code": "departement_nom", "nom": "Nom departement"}, {"code": "commune", "nom": "ID commune"}, {"code": "commune_nom", "nom": "Nom commune"},
+                      {"code": "village", "nom": "ID village"}, {"code": "village_nom", "nom": "Nom village"}, {"code": "today", "nom": "Date enregistrement"}]
   @ViewChild('barcode') barcode: ElementRef;
+  //@ViewChild('fileInput') fileInput: ElementRef;
+  fileInput: any;
 
+  fromUnion: any;
+  myPlatform:boolean = false;
 
-
-  constructor(public navCtrl: NavController, public loadingCtl: LoadingController,  public viewCtl: ViewController, public platform: Platform, public printer: Printer, public file: File, public imagePicker: ImagePicker, private camera: Camera, public sim: Sim, public device: Device, public toastCtl: ToastController, public formBuilder: FormBuilder, public modelCtl: ModalController, public zone: NgZone, public menuCtl: MenuController, public events: Events, public navParams: NavParams, public storage: Storage, public alertCtl: AlertController, public servicePouchdb: PouchdbProvider, private sanitizer: DomSanitizer) {
+  constructor(public navCtrl: NavController, public viewCtrl: ViewController, public loadingCtl: LoadingController,  public viewCtl: ViewController, public platform: Platform, public printer: Printer, public file: File, public imagePicker: ImagePicker, private camera: Camera, public sim: Sim, public device: Device, public toastCtl: ToastController, public formBuilder: FormBuilder, public modelCtl: ModalController, public zone: NgZone, public menuCtl: MenuController, public events: Events, public navParams: NavParams, public storage: Storage, public alertCtl: AlertController, public servicePouchdb: PouchdbProvider, private sanitizer: DomSanitizer) {
+    
+    this.myPlatform = this.platform.is('android')
+    this.fromUnion = this.navParams.data.fromUnion
     
     this.menuCtl.enable(false, 'options');
     this.menuCtl.enable(false, 'connexion');
     this.menuCtl.enable(false, 'profile');
+
+    if(global.config_app.code_structure){
+      this.recherche = global.config_app.code_structure+'-';
+    }else{
+      this.recherche = '';
+    }
 
     events.subscribe('user:login', (user) => {
        if(user){
@@ -179,7 +200,10 @@ export class MembresPage {
         }
       }, err => console.log(err));*/
     });
-    
+    /*if(this.navParams.data.barcodeMembre){
+      this.barcodeMembre = this.navParams.data.barcodeMembre
+      this.detail(this.navParams.data.membre, true)
+    }else */
     if(this.navParams.data.num_aggrement_op){
       this.num_aggrement_op = this.navParams.data.num_aggrement_op;
       this.nom_op = this.navParams.data.nom_op;
@@ -403,7 +427,8 @@ export class MembresPage {
             photoID: mbr.photoDocId,
             timestamp: new Date().toString(),
             type: 'photo',
-            code_union: mbr.doc.data.code_union
+            code_union: mbr.doc.data.code_union,
+            code_op: mbr.doc.data.code_op
           }
 
           //this.imageBlob = this.getBase64Image(document.getElementById("imageid"));
@@ -630,6 +655,8 @@ export class MembresPage {
       //village_autre: ['', Validators.required],
       op: ['', Validators.required],
       op_nom: [''],
+      nom_union: [''],
+      code_union: [''],
       //op_autre: ['NA', Validators.required],
       today: [today, Validators.required],
       deviceid: [''],
@@ -667,9 +694,9 @@ export class MembresPage {
       //destinationType: this.camera.DestinationType.NATIVE_URI,
       destinationType: this.camera.DestinationType.DATA_URL,
       quality: 50,
-      //targetWidth: 500,
-      targetWidth: 100,
-      targetHeight: 100,
+      targetWidth: 500,
+      //targetWidth: 100,
+      targetHeight: 500,
       correctOrientation: true,
       saveToPhotoAlbum: true
     };
@@ -681,6 +708,7 @@ export class MembresPage {
       this.base64Image = "data:image/jpeg;base64," + imageData;
       this.photo = this.base64Image ;
     }, (err) => {
+      this.photo = this.sanitizer.bypassSecurityTrustUrl('assets/images/no-photo.png');
       console.log(err);
     });
   }
@@ -759,17 +787,22 @@ export class MembresPage {
   }
 
 
-  chargerAutreNomVillage(v){
-    if(v !== 'AUTRE'){
-      this.nom_autre_village = 'NA';
-    }else{
-       let model = this.modelCtl.create('AjouterVillagePage', {'id_commune':this.confLocaliteEnquete.commune.id, 'nom_commune': this.confLocaliteEnquete.commune.nom});
-        model.present();
-        model.onDidDismiss(() => {
-          this.chargerVillages(this.confLocaliteEnquete.commune.id);
-          this.selectedVillage = '';
-      })
-      this.nom_autre_village = '';
+  chargerAutreNomVillage(index){
+    if(index > -1){
+      this.selectedVillage = this.villages[index];
+      let v = this.selectedVillage.id;
+      if(v !== 'AUTRE'){
+        this.nom_autre_village = 'NA';
+      }else{
+        let model = this.modelCtl.create('AjouterVillagePage', {'id_commune':this.confLocaliteEnquete.commune.id, 'nom_commune': this.confLocaliteEnquete.commune.nom});
+          model.present();
+          model.onDidDismiss(() => {
+            this.chargerVillages(this.confLocaliteEnquete.commune.id);
+            this.selectedVillage = '';
+            this.indexSelectedVillage = -1;
+        })
+        this.nom_autre_village = '';
+      }
     }
   }
 
@@ -781,7 +814,9 @@ export class MembresPage {
           this.membre1.op = o.data.num_aggrement;
           this.membre1.op_nom = o.data.nom_OP;
           this.membre1.op_code = o.data.code_OP;
+          this.membre1.code_op = o.data.code_OP;
           this.membre1.code_union = o.data.code_union;
+          this.membre1.nom_union = o.data.union_nom;
           this.matricule = this.generateMatriculeNouveau(o.data.code_OP);
         }
       });
@@ -789,7 +824,9 @@ export class MembresPage {
       this.membre1.op = this.ancien_OP;
       this.membre1.op_nom = this.ancien_nom_op;
       this.membre1.op_code = this.ancien_code_op;
+      this.membre1.code_op = this.ancien_code_op;
       this.membre1.code_union = this.ancien_code_union;
+      this.membre1.nom_union = this.ancien_nom_union;
       this.matricule = this.ancien_matricule;
     }
     if(op !== 'AUTRE'){
@@ -895,10 +932,14 @@ export class MembresPage {
             membre.op = this.selectedOP.data.num_aggrement;
             membre.op_nom = this.selectedOP.data.nom_OP;
             membre.op_code = this.selectedOP.data.code_OP;
+            membre.code_op = this.selectedOP.data.code_OP;
             membre.code_union = this.selectedOP.data.code_union;
+            membre.nom_union = this.selectedOP.data.union_nom;
           }else{
             membre.op_code = this.code_op;
+            membre.code_op = this.code_op;
             membre.code_union = this.code_union;
+            membre.nom_union = this.nom_union;
           }
 
           if(this.selectedClasse){
@@ -935,7 +976,8 @@ export class MembresPage {
                   photoID: ida,
                   timestamp: new Date().toString(),
                   type: 'photo',
-                  code_union: membre.code_union
+                  code_union: membre.code_union,
+                  code_op: membre.code_op
                 }
 
                 //this.imageBlob = this.getBase64Image(document.getElementById("imageid"));
@@ -995,8 +1037,12 @@ export class MembresPage {
 
      }else if(this.modifierForm){
 
+      let membre = this.membreForm.value;
+      if(this.membre1.op !== this.ancien_OP && this.verifierUniqueMatricule(membre) === 0){
+        alert('Le matricule du membre doit être unique!');
+      }else{
         let actu_ch_es: boolean = false;
-        let membre = this.membreForm.value;
+        let oldMembre: any = {};
         this.membre1.nom_Membre = membre.nom_Membre;
         this.membre1.age = membre.age;
         this.membre1.date_naissance = membre.date_naissance;
@@ -1027,262 +1073,277 @@ export class MembresPage {
           this.membre1.photoID = ida;
         }
 
-      this.villages.forEach((v, i) => {
-        if(v.id === this.selectedVillageID){
-          this.membre1.village = v.id;
-          this.membre1.village_nom = v.nom;
-        }
-      });
-   
-      //en cas de changement d'op
-      if(this.membre1.op !== this.ancien_OP){
-        //créer nouveau id
-        let id = 'fuma:op:membre:' +this.membre1.op_code + ':' + membre.matricule_Membre;
-        //sauvegarder les ancienne donnees
-        let data: any = this.grandMembre.doc.data;
-        //supprimer l'ancien membre
-        this.servicePouchdb.deleteDoc(this.grandMembre.doc);
-        //restaurer les anciennes donnees
-        this.grandMembre.doc = {};
-        this.grandMembre.doc._id = id;
-        this.grandMembre.doc.data = data;
-        
-      }
-
-      
-      this.grandMembre.doc.data = this.membre1
-      this.servicePouchdb.updateDocReturn(this.grandMembre.doc).then((res) => {
-        this.grandMembre.doc._rev = res.rev;
+        this.villages.forEach((v, i) => {
+          if(v.id === this.selectedVillageID){
+            this.membre1.village = v.id;
+            this.membre1.village_nom = v.nom;
+          }
+        });
+    
         //en cas de changement d'op
         if(this.membre1.op !== this.ancien_OP){
-          this.changerOP(this.ancien_matricule, membre.matricule_Membre, membre.nom_Membre, membre.surnom_Membre, this.membre1.code_union, this.membre1.photoID)
-          actu_ch_es = true;
-        }else if((this.membre1.nom_Membre !== this.ancien_nom) || this.membre1.surnom_Membre !== this.ancien_surnom){
-          //alert('diff')
-          this.changerNom(this.ancien_nom, this.membre1.nom_Membre, this.membre1.surnom_Membre, this.membre1.code_union);
-          actu_ch_es = true;
-        }      
+          
+          //supprimer le membre
+          //this.servicePouchdb.deleteReturn(this.grandMembre.doc);
+          oldMembre = this.clone(this.grandMembre.doc)
+          delete this.grandMembre.doc["_rev"]
+          
+          //créer nouveau id
+          let id = 'fuma:op:membre:' +this.membre1.op_code + ':' + membre.matricule_Membre;
+          //sauvegarder les ancienne donnees
+          //let data: any = this.grandMembre.doc.data;
+          //supprimer l'ancien membre
+          //restaurer les anciennes donnees
+          //this.grandMembre.doc = {};
+          this.grandMembre.doc._id = id;
+          //this.grandMembre.doc.data = data;
+          
+        }
 
-        //mise à jour de la photo
+        
+        this.grandMembre.doc.data = this.membre1
+        this.servicePouchdb.updateDocReturn(this.grandMembre.doc).then((res) => {
+          this.grandMembre.doc._rev = res.rev;
+          
+          //en cas de changement d'op
+          if(this.membre1.op !== this.ancien_OP){
+            this.servicePouchdb.deleteReturn(oldMembre);
+            oldMembre = null;
+            
+            this.changerOP(this.ancien_matricule, membre.matricule_Membre, membre.nom_Membre, membre.surnom_Membre, this.membre1.code_union, this.membre1.photoID, this.membre1.code_op)
+            actu_ch_es = true;
+          }else if((this.membre1.nom_Membre !== this.ancien_nom) || this.membre1.surnom_Membre !== this.ancien_surnom){
+            //alert('diff')
+            this.changerNom(this.ancien_nom, this.membre1.nom_Membre, this.membre1.surnom_Membre, this.membre1.code_union);
+            actu_ch_es = true;
+          }      
 
-        if(this.photoID && this.imageData){
-        //mise a jour
+          //mise à jour de la photo
 
-          this.servicePouchdb.updateAtachementReturn(this.photoID, this.photoID + '.jpeg', this.photoRev, this.imageData , 'image/jpeg').then((res) => {
+          if(this.photoID && this.imageData){
+          //mise a jour
+        
+
+            this.servicePouchdb.updateAtachementReturn(this.photoID, this.photoID + '.jpeg', this.photoRev, this.imageData , 'image/jpeg').then((res) => {
+              this.grandMembre.photo = this.photo;
+              this.grandMembre.photoDocId = this.photoID;
+              this.grandMembre.photoDocRev = res.rev
+              this.membre = this.grandMembre;
+
+              this.modifierForm = false;
+              this.ajoutForm = false;
+              //this.detailMembre = true;
+              if(actu_ch_es){
+                this.detail(this.grandMembre, true);
+                actu_ch_es = false;
+              }else{
+                this.detail(this.grandMembre, false)
+              }
+            /* this.membre = this.grandMembre;
+
+              var membreID=this.membre.doc.data.matricule_Membre || 'pending';
+              JsBarcode(this.barcode.nativeElement, membreID,{
+                width: 1,
+                height:50
+              });*/
+            /* let toast = this.toastCtl.create({
+              message: 'Membre bien sauvegardé!',
+              position: 'top',
+              duration: 1000
+            });*/
+
+            //this.navCtrl.pop();
+            /*this.modifierForm = false;
+            this.ajoutForm = false;
+            this.detailMembre = true;
+            */
+            this.membres.forEach((m, i) => {
+              if(m.doc._id === this.membre.doc._id){
+                this.membres[i] = this.membre;
+                //this.allMembres = this.membres;
+              }
+            });
+
+            this.allMembres.forEach((m, i) => {
+              if(m.doc._id === this.membre.doc._id){
+                this.allMembres[i] = this.membre;
+                //this.allMembres = this.membres;
+              }
+            });
+
+            this.allMembres1.forEach((m, i) => {
+              if(m.doc._id === this.membre.doc._id){
+                this.allMembres1[i] = this.membre;
+                //this.allMembres = this.membres;
+              }
+            });
+
+            this.reinitForm();
+            //toast.present();
+            }).catch((err) => alert('erreur mise à jour photo: '+err));
+
+            /*if(actu_ch_es){
+              this.chargerMesChamps(this.membre.doc.data.matricule_Membre);
+              this.chargerMesEssai(this.membre.doc.data.matricule_Membre);
+              actu_ch_es = false;
+            }*/
+            
+          // this.reinitForm();
+          }else if(!this.photoID && this.imageData){
+           
+            //creation
+            //let ida = 'fuma:photo:membre:'+ membre.matricule_Membre;
+            this.membre.photoID = ida;
+            var doc = {
+            // _id: ida,
+              _attachments: {},
+              photoID: ida,
+              timestamp: new Date().toString(),
+              type: 'photo',
+              code_union: this.membre1.code_union,
+              code_op: this.membre1.code_op
+            }
+
+            //this.imageBlob = this.getBase64Image(document.getElementById("imageid"));
+
+          this.fileName = ida + '.jpeg';
+            doc._attachments[this.fileName] = {
+              content_type: 'image/jpeg', 
+              data: this.imageData
+            }
+
+            //this.servicePouchdb.createDoc(doc)
+          this.servicePouchdb.put(doc, ida).then((res) => {
             this.grandMembre.photo = this.photo;
-            this.grandMembre.photoDocId = this.photoID;
-            this.grandMembre.photoDocRev = res.rev
+            this.grandMembre.photoDocId = ida;
+            this.grandMembre.photoDocRev = res.rev;
             this.membre = this.grandMembre;
 
             this.modifierForm = false;
             this.ajoutForm = false;
             //this.detailMembre = true;
-             if(actu_ch_es){
-              this.detail(this.grandMembre, true);
-              actu_ch_es = false;
-             }else{
-               this.detail(this.grandMembre, false)
-             }
-           /* this.membre = this.grandMembre;
+            //this.detail(this.grandMembre, this.selectedSource)
+            if(actu_ch_es){
+                this.detail(this.grandMembre, true);
+                actu_ch_es = false;
+              }else{
+                this.detail(this.grandMembre, false)
+              }
+            /*this.membre = this.grandMembre;
+            
+              var membreID=this.membre.doc.data.matricule_Membre || 'pending';
+              JsBarcode(this.barcode.nativeElement, membreID,{
+                width: 1,
+                height:50
+              });*/
 
-            var membreID=this.membre.doc.data.matricule_Membre || 'pending';
-            JsBarcode(this.barcode.nativeElement, membreID,{
-              width: 1,
-              height:50
+          /* let toast = this.toastCtl.create({
+              message: 'Membre bien sauvegardé!',
+              position: 'top',
+              duration: 1000
             });*/
-           /* let toast = this.toastCtl.create({
-            message: 'Membre bien sauvegardé!',
-            position: 'top',
-            duration: 1000
-          });*/
 
-          //this.navCtrl.pop();
-          /*this.modifierForm = false;
-          this.ajoutForm = false;
-          this.detailMembre = true;
-          */
-          this.membres.forEach((m, i) => {
-            if(m.doc._id === this.membre.doc._id){
-              this.membres[i] = this.membre;
-              //this.allMembres = this.membres;
-            }
+            //this.navCtrl.pop();
+            /*this.modifierForm = false;
+            this.ajoutForm = false;
+            this.detailMembre = true;*/
+            this.membres.forEach((m, i) => {
+              if(m.doc._id === this.membre.doc._id){
+                this.membres[i] = this.membre;
+                //this.allMembres = this.membres;
+              }
+            });
+
+            this.allMembres.forEach((m, i) => {
+              if(m.doc._id === this.membre.doc._id){
+                this.allMembres[i] = this.membre;
+                //this.allMembres = this.membres;
+              }
+            });
+
+            this.allMembres1.forEach((m, i) => {
+              if(m.doc._id === this.membre.doc._id){
+                this.allMembres1[i] = this.membre;
+                //this.allMembres = this.membres;
+              }
+            });
+            //toast.present();
+            this.reinitForm();
           });
-
-          this.allMembres.forEach((m, i) => {
-            if(m.doc._id === this.membre.doc._id){
-              this.allMembres[i] = this.membre;
-              //this.allMembres = this.membres;
-            }
-          });
-
-          this.allMembres1.forEach((m, i) => {
-            if(m.doc._id === this.membre.doc._id){
-              this.allMembres1[i] = this.membre;
-              //this.allMembres = this.membres;
-            }
-          });
-
-          this.reinitForm();
-          //toast.present();
-          }).catch((err) => alert('erreur mise à jour photo: '+err));
 
           /*if(actu_ch_es){
-            this.chargerMesChamps(this.membre.doc.data.matricule_Membre);
-            this.chargerMesEssai(this.membre.doc.data.matricule_Membre);
-            actu_ch_es = false;
-          }*/
-          
-         // this.reinitForm();
-        }else if(!this.photoID && this.imageData){
-          //creation
-          //let ida = 'fuma:photo:membre:'+ membre.matricule_Membre;
-          this.membre.photoID = ida;
-          var doc = {
-          // _id: ida,
-            _attachments: {},
-            photoID: ida,
-            timestamp: new Date().toString(),
-            type: 'photo',
-            code_union: this.membre1.code_union
-          }
-
-          //this.imageBlob = this.getBase64Image(document.getElementById("imageid"));
-
-        this.fileName = ida + '.jpeg';
-          doc._attachments[this.fileName] = {
-            content_type: 'image/jpeg', 
-            data: this.imageData
-          }
-
-          //this.servicePouchdb.createDoc(doc)
-        this.servicePouchdb.put(doc, ida).then((res) => {
-          this.grandMembre.photo = this.photo;
-          this.grandMembre.photoDocId = ida;
-          this.grandMembre.photoDocRev = res.rev;
-          this.membre = this.grandMembre;
-
-          this.modifierForm = false;
-          this.ajoutForm = false;
-          //this.detailMembre = true;
-          //this.detail(this.grandMembre, this.selectedSource)
-           if(actu_ch_es){
-              this.detail(this.grandMembre, true);
+              this.chargerMesChamps(this.membre.doc.data.matricule_Membre);
+              this.chargerMesEssai(this.membre.doc.data.matricule_Membre);
               actu_ch_es = false;
-             }else{
-               this.detail(this.grandMembre, false)
-             }
-          /*this.membre = this.grandMembre;
-          
+          }*/
+
+          }else{
+           
+            this.membre = this.grandMembre;
+
+            this.modifierForm = false;
+            this.ajoutForm = false;
+            //this.detailMembre = true;
+            //this.detail(this.grandMembre, this.selectedSource)
+            if(actu_ch_es){
+                this.detail(this.grandMembre, true);
+                actu_ch_es = false;
+              }else{
+                this.detail(this.grandMembre, false)
+              }
+            /*
             var membreID=this.membre.doc.data.matricule_Membre || 'pending';
-            JsBarcode(this.barcode.nativeElement, membreID,{
-              width: 1,
-              height:50
+              JsBarcode(this.barcode.nativeElement, membreID,{
+                width: 1,
+                height:50
+              });*/
+
+            /*let toast = this.toastCtl.create({
+              message: 'Membre bien sauvegardé!',
+              position: 'top',
+              duration: 1000
             });*/
 
-         /* let toast = this.toastCtl.create({
-            message: 'Membre bien sauvegardé!',
-            position: 'top',
-            duration: 1000
-          });*/
+            //this.navCtrl.pop();
+            /*this.modifierForm = false;
+            this.ajoutForm = false;
+            this.detailMembre = true;*/
+            this.membres.forEach((m, i) => {
+              if(m.doc._id === this.membre.doc._id){
+                this.membres[i] = this.membre;
+                //this.allMembres = this.membres;
+              }
+            });
 
-          //this.navCtrl.pop();
-          /*this.modifierForm = false;
-          this.ajoutForm = false;
-          this.detailMembre = true;*/
-          this.membres.forEach((m, i) => {
-            if(m.doc._id === this.membre.doc._id){
-              this.membres[i] = this.membre;
-              //this.allMembres = this.membres;
-            }
-          });
+            this.allMembres.forEach((m, i) => {
+              if(m.doc._id === this.membre.doc._id){
+                this.allMembres[i] = this.membre;
+                //this.allMembres = this.membres;
+              }
+            });
 
-          this.allMembres.forEach((m, i) => {
-            if(m.doc._id === this.membre.doc._id){
-              this.allMembres[i] = this.membre;
-              //this.allMembres = this.membres;
-            }
-          });
+            this.allMembres1.forEach((m, i) => {
+              if(m.doc._id === this.membre.doc._id){
+                this.allMembres1[i] = this.membre;
+                //this.allMembres = this.membres;
+              }
+            });
 
-          this.allMembres1.forEach((m, i) => {
-            if(m.doc._id === this.membre.doc._id){
-              this.allMembres1[i] = this.membre;
-              //this.allMembres = this.membres;
-            }
-          });
-          //toast.present();
-          this.reinitForm();
-        });
-
-         /*if(actu_ch_es){
-            this.chargerMesChamps(this.membre.doc.data.matricule_Membre);
-            this.chargerMesEssai(this.membre.doc.data.matricule_Membre);
-            actu_ch_es = false;
-         }*/
-
-        }else{
-          this.membre = this.grandMembre;
-
-          this.modifierForm = false;
-          this.ajoutForm = false;
-          //this.detailMembre = true;
-          //this.detail(this.grandMembre, this.selectedSource)
-          if(actu_ch_es){
-              this.detail(this.grandMembre, true);
+          /* if(actu_ch_es){
+              this.chargerMesChamps(this.membre.doc.data.matricule_Membre);
+              this.chargerMesEssai(this.membre.doc.data.matricule_Membre);
               actu_ch_es = false;
-             }else{
-               this.detail(this.grandMembre, false)
-             }
-          /*
-          var membreID=this.membre.doc.data.matricule_Membre || 'pending';
-            JsBarcode(this.barcode.nativeElement, membreID,{
-              width: 1,
-              height:50
-            });*/
+            }*/
 
-          /*let toast = this.toastCtl.create({
-            message: 'Membre bien sauvegardé!',
-            position: 'top',
-            duration: 1000
-          });*/
+            this.reinitForm();
 
-          //this.navCtrl.pop();
-          /*this.modifierForm = false;
-          this.ajoutForm = false;
-          this.detailMembre = true;*/
-          this.membres.forEach((m, i) => {
-            if(m.doc._id === this.membre.doc._id){
-              this.membres[i] = this.membre;
-              //this.allMembres = this.membres;
-            }
-          });
+            
+            //toast.present();
+          }
+        
+        }).catch((err) => alert('erreur mise à jour membre:\n id= '+this.grandMembre.doc._id+'\nerr= '+err));;
 
-          this.allMembres.forEach((m, i) => {
-            if(m.doc._id === this.membre.doc._id){
-              this.allMembres[i] = this.membre;
-              //this.allMembres = this.membres;
-            }
-          });
-
-          this.allMembres1.forEach((m, i) => {
-            if(m.doc._id === this.membre.doc._id){
-              this.allMembres1[i] = this.membre;
-              //this.allMembres = this.membres;
-            }
-          });
-
-         /* if(actu_ch_es){
-            this.chargerMesChamps(this.membre.doc.data.matricule_Membre);
-            this.chargerMesEssai(this.membre.doc.data.matricule_Membre);
-            actu_ch_es = false;
-          }*/
-
-          this.reinitForm();
-
-          
-          //toast.present();
-        }
-      
-      }).catch((err) => alert('erreur mise à jour membre: '+err));;
+      }
 
      }
 
@@ -1298,8 +1359,41 @@ export class MembresPage {
     
   }
 
-   changerOP(ancienMatricule, nouveauMatricule, nomProducteur, surnomProducteur, code_union, idPhoto){
-    this.chagerAtachementId(idPhoto, code_union);
+  clone(obj) {
+    // Handle the 3 simple types, and null or undefined
+    if (null == obj || "object" != typeof obj) {return obj};
+
+    // Handle Date
+    if (obj instanceof Date) {
+        var copy = new Date();
+        copy.setTime(obj.getTime());
+        return copy;
+    }
+
+    // Handle Array
+    if (obj instanceof Array) {
+        let copy = [];
+        for (var i = 0, len = obj.length; i < len; i++) {
+            copy[i] = this.clone(obj[i]);
+        }
+        return copy;
+    }
+
+    // Handle Object
+    if (obj instanceof Object) {
+        let copy = {};
+        for (var attr in obj) {
+            if (obj.hasOwnProperty(attr)) copy[attr] = this.clone(obj[attr]);
+        }
+        return copy;
+    }
+
+    throw new Error("Unable to copy obj! Its type isn't supported.");
+}
+
+
+   changerOP(ancienMatricule, nouveauMatricule, nomProducteur, surnomProducteur, code_union, idPhoto, code_op){
+    this.chagerAtachementId(idPhoto, code_union, this.code_op);
     let nouveauChamps: any = [];
     //let nouveauEssai: any = [];
     let id_champs: any = '';
@@ -1320,9 +1414,10 @@ export class MembresPage {
       nouveauChamp._id = id;
       nouveauChamp.data = data;
       
-      nouveauChamps.push(nouveauChamp);
       this.servicePouchdb.remove(champs._id);
       this.servicePouchdb.createDoc(nouveauChamp);
+
+      nouveauChamps.push(nouveauChamp);
       nouveauChamp = {};
     });
 
@@ -1401,10 +1496,11 @@ export class MembresPage {
     
   }
 
-  chagerAtachementId(idPhoto, code_union){
+  chagerAtachementId(idPhoto, code_union, code_op){
     this.servicePouchdb.getDocById(idPhoto).then((at) => {
       if(at){
         at.code_union = code_union;
+        at.code_op = code_op;
         this.servicePouchdb.put(at, at._id);
       }
     })
@@ -1489,7 +1585,16 @@ export class MembresPage {
       this.ajoutForm = false;
     }
 
-    if(this.detailMembre){
+    if(this.barcodeMembre && !this.ajoutForm && !this.modifierForm){
+      //this.viewCtrl.dismiss();
+      this.detailMembre = false;
+    }
+
+    if(this.fromUnion && !this.ajoutForm && !this.modifierForm && !this.detailMembre){
+      this.viewCtrl.dismiss();
+    }
+
+    if(this.detailMembre && !this.barcodeMembre ){
       this.detailMembre = false;
       this.membre = {};
       this.mes_champs = [];
@@ -1501,7 +1606,8 @@ export class MembresPage {
       this.detailMembre = true;
     }
     
-   // this.viewCtrl.dismiss();
+   
+    
     //this.viewCtrl.dismiss();
   }
 
@@ -1512,8 +1618,8 @@ export class MembresPage {
     let option = {
       maximumImagesCount: 1,
       quality: 50,
-      width: 100,
-      height: 100,
+      width: 500,
+      height: 500,
       outputType: 1
     };
 
@@ -1522,8 +1628,38 @@ export class MembresPage {
       this.imageData = imageData[0];
       this.base64Image = "data:image/jpeg;base64," + imageData[0];
       this.photo = this.base64Image ;
-    }, (err) => console.log(err) );
+    }, (err) => {
+      this.photo = this.sanitizer.bypassSecurityTrustUrl('assets/images/no-photo.png');
+      console.log(err)
+    } );
   }
+
+  onFileChange(event) {
+    let reader = new FileReader();
+    if(event.target.files && event.target.files.length > 0) {
+      let file = event.target.files[0];
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        if(file.type !='image/jpeg' && file.type != 'image/png'){
+          alert('Erreur! \n\nSeule les images de type jpeg et png sont autorisées!')
+          this.clearFile();
+        }else{
+          this.imageData = reader.result.split(',')[1];
+          this.base64Image = reader.result;//.split(',')[1];
+          this.photo = this.base64Image ;
+        }
+      };
+    }
+  }
+  clearFile() {
+    //this.form.get('avatar').setValue(null);
+    //this.fileInput.nativeElement.value = '';
+    this.fileInput = '';
+    this.imageData = null //.slice(',')[1];
+    this.base64Image = null//.split(',')[1];
+    this.photo = this.sanitizer.bypassSecurityTrustUrl('assets/images/no-photo.png') ;
+  }
+
 
 chargerOp(){
     this.nom_op
@@ -1653,6 +1789,11 @@ chargerOp(){
 
   ionViewDidLoad(){
     this.initForm();
+
+    if(this.navParams.data.barcodeMembre){
+      this.barcodeMembre = this.navParams.data.barcodeMembre
+      this.detail(this.navParams.data.membre, true)
+    }
     /*this.storage.get('confLocaliteEnquete').then((confLocaliteEnquete) => {
       if(confLocaliteEnquete){
         this.confLocaliteEnquete = confLocaliteEnquete;
@@ -1700,10 +1841,10 @@ chargerOp(){
     }else{
       this.rechercher = true;
       this.servicePouchdb.getPlageDocs('fuma:op:membre','fuma:op:membre:\uffff').then((mbrA) => {
-      
+       
          this.servicePouchdb.getPlageDocs('koboSubmission_fuma-op-membre','koboSubmission_fuma-op-membre\uffff').then((mbrK) => {
           this.membres = mbrA.concat(mbrK);
-          this.allMembres = this.membres
+          this.allMembres = [...this.membres]
           this.rechercher = false;
 
        
@@ -1714,7 +1855,7 @@ chargerOp(){
 
     this.servicePouchdb.getPlageDocsRapide('fuma:op:membre','fuma:op:membre:\uffff').then((mbrsA) => {
          this.servicePouchdb.getPlageDocsRapide('koboSubmission_fuma-op-membre','koboSubmission_fuma-op-membre\uffff').then((mbrsK) => {
-          this.allMembres1 = mbrsA.concat(mbrsK);
+          this.allMembres1 = [...mbrsA.concat(mbrsK)];
           //this.rechercher = false;
       }, err => console.log(err));
 
@@ -1733,6 +1874,8 @@ chargerOp(){
   ionViewDidEnter() {
 
     this.getConfig();
+
+    
         //this.getEssais()
     this.servicePouchdb.remoteSaved.getSession((err, response) => {
         if (err) {
@@ -1753,13 +1896,16 @@ chargerOp(){
         }
       });
 
-    if(!this.estInitierMemebre){
+    if(!this.estInitierMemebre && !this.barcodeMembre){
       this.getInitMemebre();
+      this.getInfoSimEmei();
+      this.estInitierMemebre = true;
+    }else if (this.barcodeMembre){
       this.getInfoSimEmei();
       this.estInitierMemebre = true;
     }
     
-    if(this.estInitierMemebre){
+    if(this.estInitierMemebre || this.barcodeMembre){
       this.storage.get('confLocaliteEnquete').then((confLocaliteEnquete) => {
           if(confLocaliteEnquete){
             this.confLocaliteEnquete = confLocaliteEnquete;
@@ -1768,6 +1914,9 @@ chargerOp(){
 
       this.chargerOp();
     }
+
+
+  
     
     /*if(!this.estInitForm){
       this.storage.get('confLocaliteEnquete').then((confLocaliteEnquete) => {
@@ -1844,13 +1993,27 @@ chargerOp(){
   }
 
   ajouter(){
-    this.photo = '';
+    //this.photo = '';
+    //this.photo = this.sanitizer.bypassSecurityTrustUrl('assets/images/no-photo.png');
+    this.clearFile();
     this.photoID = '';
     this.photoRev = '';
     this.imageData = '';
     this.imageBlob = '';
     if(!global.config_app.code_structure){
-      alert('Impossible d\'éffectuer cette opération, le code de la strucutre n\'est pas encore défini!\nVeuillez le définir dans options => Admin');
+      let alt = this.alertCtl.create({
+        title: 'Erreur code organisation',
+        message: 'Impossible d\'éffectuer cette opération, le code de la strucutre n\'est pas encore défini!\nVeuillez le définir dans options => Admin',
+        buttons: [
+          {
+            text: 'Ok',
+            handler: () => console.log('ok')
+          }
+        ]
+      });
+
+      alt.present();
+      //alert('Impossible d\'éffectuer cette opération, le code de la strucutre n\'est pas encore défini!\nVeuillez le définir dans options => Admin');
     }else
     if(this.confLocaliteEnquete){
 
@@ -1986,13 +2149,17 @@ chargerOp(){
 
     // if the value is an empty string don't filter the items
     if (val && val.trim() != '' && val.trim() != global.config_app.code_structure+'-' && val.trim() != global.config_app.code_structure.toString().toLowerCase()+'-') {
-      this.membres = this.allMembres.filter((item) => {
+      const temp = this.allMembres.filter((item) => {
         if(this.typeRecherche === 'nom'){
           return (item.doc.data.nom_Membre.toLowerCase().indexOf(val.toLowerCase()) > -1);
         }else if(this.typeRecherche === 'matricule'){
           if(val.trim() > global.config_app.code_structure+'-' || val.trim() > global.config_app.code_structure.toString().toLowerCase()+'-'){
             return (item.doc.data.matricule_Membre.toLowerCase().indexOf(val.toLowerCase()) > -1);
           }
+        }else if(this.typeRecherche === 'nom_union'){
+          return (item.doc.data.nom_union.toLowerCase().indexOf(val.toLowerCase()) > -1);
+        }else if(this.typeRecherche === 'code_union'){
+          return (item.doc.data.code_union.toLowerCase().indexOf(val.toLowerCase()) > -1);
         }else if(this.typeRecherche === 'site'){
           if(item.doc.data.commune_nom){
             return (item.doc.data.commune_nom.toLowerCase().indexOf(val.toLowerCase()) > -1);
@@ -2004,6 +2171,13 @@ chargerOp(){
         }
         
       });
+
+      if(this.selectedLimit !== 'Tous'){
+        this.membres = temp.slice(0, this.selectedLimit);
+        
+      }else{
+        this.membres = temp;
+      }
     }else{
       this.choixLimit();
     }
@@ -2065,7 +2239,7 @@ chargerOp(){
         return Promise.all(promises).then(
           res => {
               this.membres = res
-              this.allMembres=res
+              this.allMembres=[...res]
               this.rechercher = false;
               if(this.refresher !== ''){
                 this.refresher.complete();
@@ -2099,7 +2273,7 @@ chargerOp(){
         return Promise.all(promises).then(
           res => {
               this.membres = res
-              this.allMembres=res  
+              this.allMembres=[...res]  
               this.rechercher = false;  
               if(this.refresher !== ''){
                 this.refresher.complete();
@@ -2176,7 +2350,7 @@ chargerOp(){
         return Promise.all(promises).then(
           res => {
               //this.membres = res
-              this.allMembres=res
+              this.allMembres=[...res]
               //this.rechercher = false;
            
           }
@@ -2207,7 +2381,7 @@ chargerOp(){
         return Promise.all(promises).then(
           res => {
               //this.membres = res
-              this.allMembres=res  
+              this.allMembres=[...res]  
               //this.rechercher = false;         
           }
         )
@@ -2244,7 +2418,7 @@ chargerOp(){
         return Promise.all(promises).then(
           res => {
               this.membres = res
-              this.allMembres=res
+              this.allMembres=[...res]
               this.rechercher = false;  
               if(this.refresher !== ''){
                 this.refresher.complete();
@@ -2277,7 +2451,7 @@ chargerOp(){
         return Promise.all(promises).then(
           res => {
               this.membres = res
-              this.allMembres=res
+              this.allMembres=[...res]
               this.rechercher = false;
               if(this.refresher !== ''){
                 this.refresher.complete();
@@ -2406,7 +2580,10 @@ chargerOp(){
         this.grandMembre = membre;
         this.photoID = this.grandMembre.photoDocId;
         this.photoRev = this.grandMembre.photoDocRev;
-        this.photo = this.grandMembre.photo;
+        if(this.grandMembre.photo && this.grandMembre.photo != ''){
+          this.photo = this.grandMembre.photo;
+        }else
+          this.photo = this.sanitizer.bypassSecurityTrustUrl('assets/images/no-photo.png');
         let now = new Date();
         this.max_date = now.getFullYear() - 15;
         // = maxAnnee;//this.createDate(1, 0, maxAnnee);
@@ -2432,6 +2609,7 @@ chargerOp(){
         this.ancien_nom_op = this.membre1.op_nom;
         this.ancien_code_op = this.membre1.op_code;
         this.ancien_code_union = this.membre1.code_union;
+        this.ancien_nom_union = this.membre1.nom_union;
         this.nom = this.membre1.nom_Membre;
         this.ancien_nom = this.membre1.nom_Membre;
         this.ancien_surnom = this.membre1.surnom_Membre;
@@ -2485,7 +2663,7 @@ chargerOp(){
         
         this.modifierForm = true;
         this.detailMembre = false;
-
+        this.ajoutForm = false;
 
         if(!this.membre1.op_nom || this.membre1.op_nom === ''){
           this.ops.forEach((o, i) => {
@@ -2494,6 +2672,8 @@ chargerOp(){
               //this.membre1.op = o.data.num_aggrement;
               this.membre1.op_nom = o.data.nom_OP;
               this.membre1.op_code = o.data.code_OP;
+              this.membre1.code_op = o.data.code_OP;
+              this.membre1.nom_union = o.data.union_nom;
               //this.membre1.code_union = o.data.code_union;
               //this.matricule = this.generateMatriculeNouveau(o.data.code_OP);
             }
@@ -2506,6 +2686,7 @@ chargerOp(){
               //this.membre1.op_nom = o.data.nom_OP;
               //this.membre1.op_code = o.data.code_OP;
               this.membre1.code_union = o.data.code_union;
+              this.membre1.nom_union = o.data.union_nom;
               //this.matricule = this.generateMatriculeNouveau(o.data.code_OP);
             }
           });
@@ -2534,6 +2715,7 @@ chargerOp(){
     this.ancien_nom_op = '';
     this.ancien_code_op = '';
     this.ancien_code_union = '';
+    this.ancien_nom_union = '';
     this.nom = '';
     this.date_naissance = '';
     this.age = '';
@@ -2573,7 +2755,7 @@ chargerOp(){
 
   mesChamps(matricule, nom, membre){
     //this.navCtrl.push('ChampsPage', {'matricule_producteur': matricule, 'nom_producteur': nom, 'membre': membre})
-    let model = this.modelCtl.create('ChampsPage', {'matricule_producteur': matricule, 'nom_producteur': nom, 'membre': membre});
+    let model = this.modelCtl.create('ChampsPage', {'matricule_producteur': matricule, 'nom_producteur': nom, 'membre': membre, 'fromUnion': true}, {enableBackdropDismiss: false});
     model.present();
 
     model.onDidDismiss((ch) => {
@@ -2587,7 +2769,7 @@ chargerOp(){
 
   mesEssai(matricule, nom, membre){
     //this.navCtrl.push('EssaiPage', {'matricule_producteur': matricule, 'nom_producteur': nom, 'membre': membre})
-    let model = this.modelCtl.create('Essai1Page', {'matricule_producteur': matricule, 'nom_producteur': nom, 'membre': membre});
+    let model = this.modelCtl.create('Essai1Page', {'matricule_producteur': matricule, 'nom_producteur': nom, 'membre': membre, 'fromUnion': true}, {enableBackdropDismiss: false});
     model.present();
     model.onDidDismiss((ess) => {
       if(ess){
@@ -2603,10 +2785,16 @@ chargerOp(){
       inputs: [
           {
             type: 'checkbox',
+            label: 'Supprimer définitivement',
+            value: 'definitive',
+            checked: false
+          },
+          {
+            type: 'checkbox',
             label: 'Supprimer la photo du membre',
             value: 'oui',
             checked: true
-          }
+          },
       ],
       buttons:[
         {
@@ -2617,53 +2805,82 @@ chargerOp(){
         {
           text: 'Confirmer',
           handler: (data) => {
+            if(data[0] && data[0].toString() == 'definitive'){
+              this.servicePouchdb.deleteReturn(membre).then((res) => {
+
+                //Supprimer la photo si la case est cochée
+                 if(membre.data.photoID && data[1] && data[1].toString() === 'oui'){
+                  this.servicePouchdb.getDocById(membre.data.photoID).then((doc) => {
+                    if(doc){
+                      this.servicePouchdb.deleteReturn(doc).then(res => console.log('ok'), err => console.log('err'));
+                    }
+                  }, err => console.log(err))
+                  
+                }
   
-            this.servicePouchdb.deleteDocReturn(membre).then((res) => {
-
-              //Supprimer la photo si la case est cochée
-               if(membre.data.photoID && data.toString() === 'oui'){
-                this.servicePouchdb.getDocById(membre.data.photoID).then((doc) => {
-                  if(doc){
-                    this.servicePouchdb.deleteDocReturn(doc).then(res => console.log('ok'), err => console.log('err'));
+                this.membres.forEach((m, i) => {
+                  if(m.doc._id === membre._id){
+                    this.membres.splice(i, 1);
+                    //this.allMembres1.splice(i, 1);
+                    //this.allMembres = this.membres;
                   }
-                }, err => console.log(err))
-                
-              }
-
-              this.membres.forEach((m, i) => {
-                if(m.doc._id === membre._id){
-                  this.membres.splice(i, 1);
-                  //this.allMembres1.splice(i, 1);
-                  //this.allMembres = this.membres;
-                }
-              })
-
-              this.allMembres1.forEach((m, i) => {
-                if(m.doc._id === membre._id){
-                  this.allMembres1.splice(i, 1);
-                  /*this.detailMembre = false;
-                  this.membre = {};*/
-                }
+                })
+  
+                this.allMembres1.forEach((m, i) => {
+                  if(m.doc._id === membre._id){
+                    this.allMembres1.splice(i, 1);
+                  }
+                });
+  
+                this.detailMembre = false;
+                this.membre = {};
               });
+             
+            }else{
+              this.servicePouchdb.deleteDocReturn(membre).then((res) => {
 
-              this.detailMembre = false;
-              this.membre = {};
-            });
-           
-            /*let toast = this.toastCtl.create({
-              message:'Membre OP bien suppriée',
-              position: 'top',
-              duration: 3000
-            });
-
-            toast.present();
-            this.navCtrl.pop();*/
+                //Supprimer la photo si la case est cochée
+                 if(membre.data.photoID && data[1] && data[1].toString() === 'oui'){
+                  this.servicePouchdb.getDocById(membre.data.photoID).then((doc) => {
+                    if(doc){
+                      this.servicePouchdb.deleteDocReturn(doc).then(res => console.log('ok'), err => console.log('err'));
+                    }
+                  }, err => console.log(err))
+                  
+                }
+  
+                this.membres.forEach((m, i) => {
+                  if(m.doc._id === membre._id){
+                    this.membres.splice(i, 1);
+                    //this.allMembres1.splice(i, 1);
+                    //this.allMembres = this.membres;
+                  }
+                })
+  
+                this.allMembres1.forEach((m, i) => {
+                  if(m.doc._id === membre._id){
+                    this.allMembres1.splice(i, 1);
+                  }
+                });
+  
+                this.detailMembre = false;
+                this.membre = {};
+              });
+             
+            }
+  
           }
         }
       ]
     });
 
     alert.present();
+  }
+
+
+  onAngularPrint(membre){
+    let model = this.modelCtl.create('CarteMembrePage', {'membre': membre});
+    model.present();
   }
 
   

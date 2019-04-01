@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NavController, ModalController, LoadingController, NavParams, IonicPage, AlertController, ToastController, MenuController, Events } from 'ionic-angular';
+import { NavController, ModalController, ViewController, LoadingController, NavParams, IonicPage, AlertController, ToastController, MenuController, Events } from 'ionic-angular';
 import { PouchdbProvider } from '../../../providers/pouchdb-provider';
 //import { ModifierOpPage } from '../modifier-op/modifier-op';
 //import { MembresPage } from '../../membres/membres'
@@ -60,7 +60,7 @@ export class DetailOpPage {
   estAnimataire: boolean = false;
   
 
-  constructor(public servicePouchdb: PouchdbProvider, public loadinCtl: LoadingController, public formBuilder: FormBuilder, public modelCtl: ModalController, public toastCtl: ToastController, public menuCtl: MenuController, public events: Events, public alertCtl: AlertController, public navCtrl: NavController, public navParams: NavParams) {
+  constructor(public servicePouchdb: PouchdbProvider, public viewCtl: ViewController, public loadinCtl: LoadingController, public formBuilder: FormBuilder, public modelCtl: ModalController, public toastCtl: ToastController, public menuCtl: MenuController, public events: Events, public alertCtl: AlertController, public navCtrl: NavController, public navParams: NavParams) {
     
     this.menuCtl.enable(false, 'options');
     this.menuCtl.enable(false, 'connexion');
@@ -174,8 +174,16 @@ export class DetailOpPage {
 
   }
 
-  calculStatisitque(code_op){
+  restitution(code_op){
     let model = this.modelCtl.create('RestitutionPage', {'type': 'op', 'code_op': code_op});
+    model.present();
+    //this.calculerMembreAyantFaitUnEssai(essais);
+    //this.calculerNombreEssaiParTraitement(essais, traitements);
+    //this.visualisation(essais);
+  }
+
+  getStatistique(code_op){
+    let model = this.modelCtl.create('StatistiquePage', {'type': 'op', 'code_op': code_op});
     model.present();
     //this.calculerMembreAyantFaitUnEssai(essais);
     //this.calculerNombreEssaiParTraitement(essais, traitements);
@@ -231,6 +239,10 @@ export class DetailOpPage {
     }))
     
           
+  }
+
+dismiss(){
+    this.viewCtl.dismiss();
   }
 
   Change_nom_op(num_a, nom_op) {

@@ -29,14 +29,17 @@
       <ion-list>
         <ion-item>
           <h2><strong>Nom utilisateur:</strong> {{user.name}} </h2>
-          <h2><strong>Nom:</strong> {{user.nom}} </h2>
+          <h2><strong>Nom/Organisation:</strong> {{user.nom}} </h2>
           <h2><strong>Prénom:</strong> {{user.prenom}} </h2>
           <!--h2><strong>{{'NOMUTILISATEUR' | translate}}:</strong> {{user.name}} </h2-->
           <h2><strong>{{'EMAIL' | translate}}:</strong> {{user.email}} </h2>
           <h2><strong>{{'SEX' | translate}}:</strong> <span *ngIf="user.sex == 'H'">Homme</span> <span *ngIf="user.sex == 'F'">Femme</span> </h2>
           <h2><strong>Roles/droits:</strong> <span *ngFor="let role of user.roles; let i = index">{{role}}<span *ngIf="i < user.roles.length - 1">, </span></span></h2>
           <h2><strong>Codes unions autorisées:</strong> <span *ngFor="let cu of user.codes_unions; let i = index">{{cu}}<span *ngIf="i < user.codes_unions.length - 1">, </span></span></h2>
-          
+          <h2><strong>Codes unions ops:</strong> <span *ngFor="let cu of user.codes_ops; let i = index">{{cu}}<span *ngIf="i < user.codes_ops.length - 1">, </span></span></h2>
+          <h2><strong>Années essais:</strong> <span *ngFor="let cu of user.annees_essais; let i = index">{{cu}}<span *ngIf="i < user.annees_essais.length - 1">, </span></span></h2>
+          <h2><strong>Codes protocoles:</strong> <span *ngFor="let cu of user.codes_protocoles; let i = index">{{cu}}<span *ngIf="i < user.codes_protocoles.length - 1">, </span></span></h2>
+         
           <h2><strong>{{'DATEENREGISTREMENT' | translate}}:</strong> {{user.date | date: 'dd-MM-yyyy'}}</h2>
           
         </ion-item>

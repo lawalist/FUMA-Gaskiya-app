@@ -92,7 +92,7 @@
           <ion-row *ngIf="union.data.deleted"> <ion-col class='meta-key'><strong>Supprimé par:</strong></ion-col> <ion-col class='meta-value'> {{union.data.deleted_by}} </ion-col> </ion-row>
         </ion-grid>
       </ion-card-content> 
-    </ion-card>union
+    </ion-card>
   </div>
 
   <div *ngIf="modifierForm">
@@ -187,7 +187,8 @@
     <ion-fab-list side="top">
       <button ion-fab mini *ngIf="(user && user.roles && global.estManager(user.roles)) || estManger" (click)="supprimer(union)" color="delete" ><ion-icon name="trash"></ion-icon></button>
       <button ion-fab mini *ngIf="(user && user.roles && global.estAnimataire(user.roles)) || estAnimataire" (click)="openMap(union.data.code_union)" color="my_primary"><ion-icon name="pin"></ion-icon></button>
-      <!--button ion-fab mini *ngIf="(user && user.roles && global.estAnimataire(user.roles)) || estAnimataire" (click)="calculStatisitque(union.data.code_union)" color="my_primary"><ion-icon name="stats"></ion-icon></button-->
+      <!--button ion-fab mini *ngIf="(user && user.roles && global.estAnimataire(user.roles)) || estAnimataire" (click)="restitution(union.data.code_union)" color="my_primary"><ion-icon name="analytics"></ion-icon></button-->
+      <button ion-fab mini *ngIf="(user && user.roles && global.estAnimataire(user.roles)) || estAnimataire" (click)="getStatistique(union.data.code_union)" color="my_primary"><ion-icon name="stats"></ion-icon></button>
       <button ion-fab *ngIf="(user && user.roles && global.estAnimataire(user.roles)) || estAnimataire" (click)="opUnion(union.data.num_aggrement, union.data.nom_union, union.data.code_union)" color="my_primary"><strong>OP</strong></button>
       <button ion-fab mini *ngIf="(user && user.roles && global.estManager(user.roles)) || estManger" (click)="editer(union)" color="my_primary" ><ion-icon name="create"></ion-icon></button>
     </ion-fab-list>

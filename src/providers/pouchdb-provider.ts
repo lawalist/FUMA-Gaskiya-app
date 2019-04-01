@@ -6,11 +6,15 @@ import { Observable } from 'rxjs/Rx';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Storage } from '@ionic/storage';
 import { global } from '../global-variables/variable';
+ 
 
 //pouchDB made available to compiler through  @types/pouchdb (npm install @types/pouchdb --save --save-exact)
 //import PouchDB from 'pouchdb'
 declare var require: any;
-import PouchDB from 'pouchdb';
+//import PouchDB from 'pouchdb';
+//import 'fs'
+import {WriteStream, createWriteStream} from 'fs'
+var PouchDB = require('pouchdb').default;
 //import * as cordovaSqlitePlugin from 'pouchdb-adapter-cordova-sqlite';
 import * as pouchdbAuthentication from 'pouchdb-authentication';
 
@@ -18,19 +22,19 @@ import * as pouchdbAuthentication from 'pouchdb-authentication';
 
 //import * as pouchdbdesign from 'pouchdb-design';
 PouchDB.plugin(require('pouchdb-adapter-cordova-sqlite'));
-
 PouchDB.plugin(pouchdbAuthentication);
 //PouchDB.plugin(require('pouchdb-design'));
 //PouchDB.plugin(require('relational-pouch'));
 //PouchDB.plugin(require('pouchdb-full-sync'));
 //PouchDB.plugin(require('pouchdb-load'));
+import * as replicationStream from 'pouchdb-replication-stream';
 //var replicationStream = require('pouchdb-replication-stream');
 //var fs = require('fs');
 
 //import fs from 'fs';
 //import * as fs from 'fs';
-//PouchDB.plugin(replicationStream.plugin);
-//PouchDB.adapter('writableStream', replicationStream.adapters.writableStream);
+PouchDB.plugin(replicationStream.plugin);
+PouchDB.adapter('writableStream', replicationStream.adapters.writableStream);
 //PouchDB.plugin(pouchdbQuickSearch); 
 
 //var GQL = require('GQL')
@@ -58,6 +62,10 @@ export class PouchdbProvider {
     data: any;
     roles: any = [];
     codes_unions: any = [];
+    codes_ops: any = [];
+    codes_protocoles: any = [];
+    sites: any = [];
+    annees_essais: any = [];
     batch_size = 100;
     batches_limit = 10;
     //wr: createWriteStream
@@ -83,19 +91,23 @@ export class PouchdbProvider {
 
         if (!this.isInstantiated) { 
 
-            this.database = new PouchDB("frna-db"/*, {adapter: 'cordova-sqlite'}*/);
+            //this.database = new PouchDB("frna-db"/*, {adapter: 'cordova-sqlite'}*/);
             //this.database.info().then(console.log.bind(console))
             
             this.storage.get('info_db').then((info_db) => {
               if(info_db){
                 global.info_db.ip = info_db.ip.toString();
                 global.info_db.nom_db =  info_db.nom_db.toString();
+                global.info_db.mode_connexion =  info_db.mode_connexion.toString();
                 //alert("http://"+ info_db.ip +"/"+info_db.nom_db)
                 this.remoteSaved = new PouchDB('http://'+ info_db.ip.toString() +'/'+ info_db.nom_db.toString(), this.pouchOpts);
                 global.remoteSaved = this.remoteSaved;
                 //this.database = new PouchDB('app-database');
                 //this.sync()
-              //this.database = new PouchDB("frna-db"/*, {adapter: 'cordova-sqlite'}*/);////base production
+                if(global.info_db.mode_connexion == 'online')
+                  this.database = this.remoteSaved;
+                else
+                  this.database = new PouchDB("frna-db"/*, {adapter: 'cordova-sqlite'}*/);////base production
                 //alert(this.database.adapter);
                 //this.database = new PouchDB("moriben-frn-app-db");////base production moriben
                 //this.sync()
@@ -113,7 +125,7 @@ export class PouchdbProvider {
                   this.remoteSaved = new PouchDB('http://'+ global.info_db.ip +'/'+ global.info_db.nom_db, this.pouchOpts);
                   global.remoteSaved = this.remoteSaved;
                 }
-                
+                this.database = new PouchDB("frna-db"/*, {adapter: 'cordova-sqlite'}*/);////base production
                 //this.database = new PouchDB("frna-db"/*, {adapter: 'cordova-sqlite'}**/);
                 //alert(this.database.adapter);
                 //this.database = new PouchDB("moriben-frn-app-db");////base production moriben
@@ -124,6 +136,7 @@ export class PouchdbProvider {
                   this.remoteSaved = new PouchDB('http://'+ global.info_db.ip +'/'+ global.info_db.nom_db, this.pouchOpts);
                   global.remoteSaved = this.remoteSaved;
               }
+              this.database = new PouchDB("frna-db"/*, {adapter: 'cordova-sqlite'}*/);////base production
               //this.database = new PouchDB("frna-db"/*, {adapter: 'cordova-sqlite'}*/);
               //alert(this.database.adapter);
               //this.database = new PouchDB("fuma-frn-app-db");
@@ -139,139 +152,241 @@ export class PouchdbProvider {
       }
     }
 
-    replication(server){
-      let toast = this.toastCtl.create({
-        message: 'replication en cours...',
-        position: 'top',
-        duration: 1000,
-        showCloseButton: true,
-        closeButtonText: 'ok',
-        dismissOnPageChange: true
-          });
-  
-          toast.present();
-         // t = true
-          //toast.onDidDismiss(() => t = false)
-      PouchDB.replicate(this.database, server, {batch_size: 1, batches_limit: 1}).on('change',  (info) => {
-          //alert(info)
-          //console.log('change', info)
-          //this.affichierMsg('Change '+info)
-      }).on('paused',  (err) => {
-          //console.log('paused', err)
-          if(err){
-            alert('pause replication vers servveur => '+err)
-          }
-          
-      }).on('active',  ()  => {
-          // replicate resumed (e.g. new changes replicating, user went back online)
-          //this.affichierMsg('Active')
-      }).on('denied',  (err) => {
-          //console.log('denied', err)
-          /*if(t){
-            toast.dismiss()
-          }*/
-          this.affichierMsg('Erreur replication vers le serveur, accès réfusé par le serveur!')
-      }).on('complete',  (info) => {
-          //console.log('complete', info)
-          /*if(t){
-            toast.dismiss()
-          }*/
-          this.affichierMsg('Replication vers le serveur terminée avec succes')
-          //metode;
-      }).on('error',  (err) => {
-          //console.log('error', err)
-          /*if(t){
-            toast.dismiss()
-          }*/
+    backUpDB(){
+      //let p: WriteStream =   new WriteStream(createWriteStream('t.txt'))
+      //let wr = new p().path = 'txt';
+      
+     // var ws = f.cre
+      
+      /*this.database.dump(p).then((res) => {
+        alert(res+'  '+res.ok)
+      })*/
+    }
 
-          alert('err rep => '+err)
-          this.affichierMsg('Erreur replication vers le serveur, problème réseau!')
-          //metode;
-      }).catch((err) => alert('err catch replication => '+err));
+    replication(server){
+      if(global.info_db.mode_connexion != 'online'){
+                 
+        let toast = this.toastCtl.create({
+          message: 'replication en cours...',
+          position: 'top',
+          duration: 1000,
+          showCloseButton: true,
+          closeButtonText: 'ok',
+          dismissOnPageChange: true
+            });
+    
+            toast.present();
+          // t = true
+            //toast.onDidDismiss(() => t = false)
+        PouchDB.replicate(this.database, server, {batch_size: 1, batches_limit: 1}).on('change',  (info) => {
+            //alert(info)
+            //console.log('change', info)
+            //this.affichierMsg('Change '+info)
+        }).on('paused',  (err) => {
+            //console.log('paused', err)
+            if(err){
+              alert('pause replication vers servveur => '+err)
+            }
+            
+        }).on('active',  ()  => {
+            // replicate resumed (e.g. new changes replicating, user went back online)
+            //this.affichierMsg('Active')
+        }).on('denied',  (err) => {
+            //console.log('denied', err)
+            /*if(t){
+              toast.dismiss()
+            }*/
+            this.affichierMsg('Erreur replication vers le serveur, accès réfusé par le serveur!')
+        }).on('complete',  (info) => {
+            //console.log('complete', info)
+            /*if(t){
+              toast.dismiss()
+            }*/
+            this.affichierMsg('Replication vers le serveur terminée avec succes')
+            //metode;
+        }).on('error',  (err) => {
+            //console.log('error', err)
+            /*if(t){
+              toast.dismiss()
+            }*/
+
+            alert('err rep => '+err)
+            this.affichierMsg('Erreur replication vers le serveur, problème réseau!')
+            //metode;
+        }).catch((err) => alert('err catch replication => '+err));
+      }else
+        alert('Vous etes en mode connecté')
     }
 
 
     replicationByDocsId(ids: any = [], ip, nom_db, username, paswd){
-
-      let t: boolean = false;
-      //this.affichierMsg('Synchronisation en cours...');
-      let toast = this.toastCtl.create({
-        message: 'Replication de l\'enregistrement en cours...',
-        position: 'top',
-        duration: 1000,
-        showCloseButton: true,
-        closeButtonText: 'ok',
-        dismissOnPageChange: true
-          });
-  
-          toast.present();
-          t = true
-          toast.onDidDismiss(() => t = false)
+      if(global.info_db.mode_connexion != 'online'){
+        let t: boolean = false;
+        //this.affichierMsg('Synchronisation en cours...');
+        let toast = this.toastCtl.create({
+          message: 'Replication de l\'enregistrement en cours...',
+          position: 'top',
+          duration: 1000,
+          showCloseButton: true,
+          closeButtonText: 'ok',
+          dismissOnPageChange: true
+            });
     
-      var optionsSaved = {
-        skip_setup: true
-         // "auth.username": "fumagaskiya-app",
-         //"auth.password": "AA61E1481D12534A9CABE87465474"
-        //"auth.username": "admin",
-        //"auth.password": "admin"
-      }
-  
-      let remote = new PouchDB('http://'+ ip +'/'+ nom_db,  {
-        auth: {
-          username: username,
-          password: paswd
-        },
-        ajax: {
-          timeout: 4800000,
+            toast.present();
+            t = true
+            toast.onDidDismiss(() => t = false)
+      
+        var optionsSaved = {
+          skip_setup: true
+          // "auth.username": "fumagaskiya-app",
+          //"auth.password": "AA61E1481D12534A9CABE87465474"
+          //"auth.username": "admin",
+          //"auth.password": "admin"
         }
-      });
+    
+        let remote = new PouchDB('http://'+ ip +'/'+ nom_db,  {
+          auth: {
+            username: username,
+            password: paswd
+          },
+          ajax: {
+            timeout: 4800000,
+          }
+        });
 
-      this.database.replicate.to(remote, {
-        timeout: 60000,
-        batch_size: this.batch_size,
-        batches_limit: this.batches_limit,
-        doc_ids: ids
-      }).on('change',  (info) => {
-      }).on('paused',  (err) => {
-          //console.log('paused', err)
-          if(err){
-            alert('pause replication de l\'enregistrement => '+err)
+        this.database.replicate.to(remote, {
+          timeout: 60000,
+          batch_size: this.batch_size,
+          batches_limit: this.batches_limit,
+          doc_ids: ids
+        }).on('change',  (info) => {
+        }).on('paused',  (err) => {
+            //console.log('paused', err)
+            if(err){
+              alert('pause replication de l\'enregistrement => '+err)
+            }
+            
+        }).on('active',  ()  => {
+            // replicate resumed (e.g. new changes replicating, user went back online)
+            //this.affichierMsg('Active')
+        }).on('denied',  (err) => {
+            //console.log('denied', err)
+            if(t){
+              toast.dismiss()
+            }
+            this.affichierMsg('Erreur replication de l\'enregistrement, accès réfusé par le serveur!')
+            remote.close();
+        }).on('complete',  (info) => {
+            //console.log('complete', info)
+            if(t){
+              toast.dismiss()
+            }
+            this.affichierMsg('Replication de l\'enregistrement terminée avec succes')
+            remote.close();
+            //metode;
+        }).on('error',  (err) => {
+            //console.log('error', err)
+            if(t){
+              toast.dismiss()
+            }
+    
+            alert('Erruer  de l\'enregistrement => '+err+ '. hote ==> '+'http://'+ ip +'/'+ nom_db)
+            this.affichierMsg('Erreur replication de l\'enregistrement, problème réseau!')
+            remote.close();
+            //metode;
+        });
+      }else
+        alert('Vous etes en mode connecté')
+    }
+
+
+
+
+    syncUsersDB(ip_local, username_local, paswd_local, ip_distant, username_distant, paswd_distant){
+        let t: boolean = false;
+        //this.affichierMsg('Synchronisation en cours...');
+        let toast = this.toastCtl.create({
+          message: 'Synchronisation en cours...',
+          position: 'top',
+          duration: 1000,
+          showCloseButton: true,
+          closeButtonText: 'ok',
+          dismissOnPageChange: true
+            });
+    
+            toast.present();
+            t = true
+            toast.onDidDismiss(() => t = false)
+      
+        var optionsSaved = {
+          skip_setup: true
+        }
+
+        let local = new PouchDB('http://'+ ip_local +'/_users',  {
+          auth: {
+            username: username_local,
+            password: paswd_local
+          },
+          ajax: {
+            timeout: 4800000,
           }
-          
-      }).on('active',  ()  => {
-          // replicate resumed (e.g. new changes replicating, user went back online)
-          //this.affichierMsg('Active')
-      }).on('denied',  (err) => {
-          //console.log('denied', err)
-          if(t){
-            toast.dismiss()
+        });
+    
+        let remote = new PouchDB('http://'+ ip_distant +'/_users',  {
+          auth: {
+            username: username_distant,
+            password: paswd_local
+          },
+          ajax: {
+            timeout: 4800000,
           }
-          this.affichierMsg('Erreur replication de l\'enregistrement, accès réfusé par le serveur!')
-          remote.close();
-      }).on('complete',  (info) => {
-          //console.log('complete', info)
-          if(t){
-            toast.dismiss()
-          }
-          this.affichierMsg('Replication de l\'enregistrement terminée avec succes')
-          remote.close();
-          //metode;
-      }).on('error',  (err) => {
-          //console.log('error', err)
-          if(t){
-            toast.dismiss()
-          }
-  
-          alert('Erruer  de l\'enregistrement => '+err+ '. hote ==> '+'http://'+ ip +'/'+ nom_db)
-          this.affichierMsg('Erreur replication de l\'enregistrement, problème réseau!')
-          remote.close();
-          //metode;
-      });
+        });
+
+        local.sync(remote, {
+          timeout: 60000,
+          batch_size: this.batch_size,
+          batches_limit: this.batches_limit,
+        }).on('change',  (info) => {
+        }).on('paused',  (err) => {
+            //console.log('paused', err)
+            if(err){
+              alert('pause sync => '+err)
+            }
+            
+        }).on('active',  ()  => {
+            // replicate resumed (e.g. new changes replicating, user went back online)
+            //this.affichierMsg('Active')
+        }).on('denied',  (err) => {
+            //console.log('denied', err)
+            if(t){
+              toast.dismiss()
+            }
+            this.affichierMsg('Erreur sync , accès réfusé par le serveur!')
+            remote.close();
+        }).on('complete',  (info) => {
+            //console.log('complete', info)
+            if(t){
+              toast.dismiss()
+            }
+            this.affichierMsg('Sync terminée avec succes')
+            remote.close();
+            //metode;
+        }).on('error',  (err) => {
+            //console.log('error', err)
+            if(t){
+              toast.dismiss()
+            }
+    
+            alert('Erruer  Sync => '+err)
+            this.affichierMsg('Erreur Sync, problème réseau!')
+            remote.close();
+            //metode;
+        });
     }
 
   copierDB(){
    
-    let codes_unions: any = {};
+    let codes_unions: any = [];
     //let unions: any = ['WA', 'DO']
     let loading = this.loadingCtrl.create({
       content: 'Transfert en cours...'
@@ -482,66 +597,94 @@ public getMembreAttachment(id,filename) {
 
     public sync(remote ?: string, options: any = {}) {
 
-    if(global.info_user && global.info_user.roles){
-      this.roles = global.info_user.roles
-    }else{
-      this.roles = []
-    }
-  
-    if(global.info_user && global.info_user.codes_unions){
-      this.codes_unions = global.info_user.codes_unions
-    }else{
-      this.codes_unions = []
-    }
-    console.log('setting up db sync')
-    //default connection
-    // if (!remote) {
-    //     remote = this.remoteDetails['remote-couch-url']
-    //     options = {
-    //         "auth.username": this.remoteDetails.username,
-    //         "auth.password": this.remoteDetails.password
-    //     }
-    // }
+      if(global.info_db.mode_connexion != 'online'){
+                 
+        if(global.info_user && global.info_user.roles){
+          this.roles = global.info_user.roles
+        }else{
+          this.roles = []
+        }
+      
+        if(global.info_user && global.info_user.codes_unions){
+          this.codes_unions = global.info_user.codes_unions
+        }else{
+          this.codes_unions = []
+        }
 
-    
-    //var remoteSaved = "http://fumagaskiya-db.stats4sd.org/test"
-    //var remoteSaved = "http://127.0.0.1:5984/app_fuma"
-    var optionsSaved = {
-      skip_setup: true
-      //  "auth.username": "fumagaskiya-app",
-      // "auth.password": "AA61E1481D12534A9CABE87465474"
-      //"auth.username": "admin",
-      //"auth.password": "admin"
-    }
-    //let remoteDatabase = new PouchDB(remoteSaved, optionsSaved);
-    // let remoteDatabase = new PouchDB(this.remoteSaved, optionsSaved);
-    //console.log('remoteDB', remoteDatabase)
-    //this.database.sync(remoteDatabase, {
-    //this.database.compact().then(() => {
-     // this.affichierMsg('Commpaction ok');
-      this.database.sync(this.remoteSaved, {
-        live: true,
-        retry: true,
-        continuous: true,
-        batch_size: this.batch_size,
-        batches_limit: this.batches_limit,
-        filter: 'filtrerDoc/myfilter',
-        query_params: {roles: this.roles, codes_unions: this.codes_unions}
-    }).on('change', function (info) {
-        //alert(info)
-        console.log('change', info)
-    }).on('paused', function (err) {
-        //alert('sync paused => ' +err)
-    }).on('active', function () {
-        // replicate resumed (e.g. new changes replicating, user went back online)
-    }).on('denied', function (err) {
-        alert('sync denied => '+ err)
-    }).on('complete', function (info) {
-        this.affichierMsg('sync complete')
-    }).on('error', function (err) {
-        alert('error sync => '+ err)
-    });
-  //});
+        if(global.info_user && global.info_user.codes_ops){
+          this.codes_ops = global.info_user.codes_ops
+        }else{
+          this.codes_ops = []
+        }
+
+        if(global.info_user && global.info_user.codes_protocoles){
+          this.codes_protocoles = global.info_user.codes_protocoles
+        }else{
+          this.codes_protocoles = []
+        }
+
+        if(global.info_user && global.info_user.sites){
+          this.sites = global.info_user.sites
+        }else{
+          this.sites = []
+        }
+
+        if(global.info_user && global.info_user.annees_essais){
+          this.annees_essais = global.info_user.annees_essais
+        }else{
+          this.annees_essais = []
+        }
+        console.log('setting up db sync')
+        //default connection
+        // if (!remote) {
+        //     remote = this.remoteDetails['remote-couch-url']
+        //     options = {
+        //         "auth.username": this.remoteDetails.username,
+        //         "auth.password": this.remoteDetails.password
+        //     }
+        // }
+
+        
+        //var remoteSaved = "http://fumagaskiya-db.stats4sd.org/test"
+        //var remoteSaved = "http://127.0.0.1:5984/app_fuma"
+        var optionsSaved = {
+          skip_setup: true
+          //  "auth.username": "fumagaskiya-app",
+          // "auth.password": "AA61E1481D12534A9CABE87465474"
+          //"auth.username": "admin",
+          //"auth.password": "admin"
+        }
+        //let remoteDatabase = new PouchDB(remoteSaved, optionsSaved);
+        // let remoteDatabase = new PouchDB(this.remoteSaved, optionsSaved);
+        //console.log('remoteDB', remoteDatabase)
+        //this.database.sync(remoteDatabase, {
+        //this.database.compact().then(() => {
+        // this.affichierMsg('Commpaction ok');
+          this.database.sync(this.remoteSaved, {
+            live: true,
+            retry: true,
+            continuous: true,
+            batch_size: this.batch_size,
+            batches_limit: this.batches_limit,
+            filter: 'filtrerDoc/myfilter',
+            query_params: {roles: this.roles, codes_unions: this.codes_unions, codes_ops: this.codes_ops, codes_protocoles: this.codes_protocoles, sites: this.sites}
+        }).on('change', function (info) {
+            //alert(info)
+            console.log('change', info)
+        }).on('paused', function (err) {
+            //alert('sync paused => ' +err)
+        }).on('active', function () {
+            // replicate resumed (e.g. new changes replicating, user went back online)
+        }).on('denied', function (err) {
+            alert('sync denied => '+ err)
+        }).on('complete', function (info) {
+            this.affichierMsg('sync complete')
+        }).on('error', function (err) {
+            alert('error sync => '+ err)
+        });
+      //});
+      }else
+        alert('Vous etes en mode connecté')
 
 }
 
@@ -591,62 +734,96 @@ public syncIinfoDB(ip, nom) {
     }else{
       this.codes_unions = []
     }
+
+    if(global.info_user && global.info_user.codes_ops){
+      this.codes_ops = global.info_user.codes_ops
+    }else{
+      this.codes_ops = []
+    }
+
+    if(global.info_user && global.info_user.codes_protocoles){
+      this.codes_protocoles = global.info_user.codes_protocoles
+    }else{
+      this.codes_protocoles = []
+    }
+
+    
+    if(global.info_user && global.info_user.sites){
+      this.sites = global.info_user.sites
+    }else{
+      this.sites = []
+    }
+
+    if(global.info_user && global.info_user.annees_essais){
+      this.annees_essais = global.info_user.annees_essais
+    }else{
+      this.annees_essais = []
+    }
+    
   //alert("http://"+ ip +"/"+nom)
   //this.remoteSaved = null;
   this.remoteSaved = new PouchDB('http://'+ ip +'/'+ nom, this.pouchOpts);
   global.remoteSaved = this.remoteSaved;
-  this.testConnexion()
-    console.log('setting up db sync')
-    //default connection
-    // if (!remote) {
-    //     remote = this.remoteDetails['remote-couch-url']
-    //     options = {
-    //         "auth.username": this.remoteDetails.username,
-    //         "auth.password": this.remoteDetails.password
-    //     }
-    // }
+  if(global.info_db.mode_connexion == 'online'){
+    this.database = this.remoteSaved;
+    this.testConnexion()
+  }
+  else{
+    this.database = new PouchDB("frna-db"/*, {adapter: 'cordova-sqlite'}*/);////base production
 
-    
-    //var remoteSaved = "http://fumagaskiya-db.stats4sd.org/test"
-    //var remoteSaved = "http://127.0.0.1:5984/app_fuma"
-    var optionsSaved = {
-      //  "auth.username": "fumagaskiya-app",
-      // "auth.password": "AA61E1481D12534A9CABE87465474"
-      //"auth.username": "admin",
-      //"auth.password": "admin"
+    this.testConnexion()
+      console.log('setting up db sync')
+      //default connection
+      // if (!remote) {
+      //     remote = this.remoteDetails['remote-couch-url']
+      //     options = {
+      //         "auth.username": this.remoteDetails.username,
+      //         "auth.password": this.remoteDetails.password
+      //     }
+      // }
+
+      
+      //var remoteSaved = "http://fumagaskiya-db.stats4sd.org/test"
+      //var remoteSaved = "http://127.0.0.1:5984/app_fuma"
+      var optionsSaved = {
+        //  "auth.username": "fumagaskiya-app",
+        // "auth.password": "AA61E1481D12534A9CABE87465474"
+        //"auth.username": "admin",
+        //"auth.password": "admin"
+      }
+      //let remoteDatabase = new PouchDB(remoteSaved, optionsSaved);
+      //let remoteDatabase = new PouchDB(this.remoteSaved, optionsSaved);
+      //console.log('remoteDB', remoteDatabase)
+      //this.database.compact().then(() => {
+        //this.affichierMsg('Commpaction ok');
+        this.database.sync(this.remoteSaved, {
+          live: true,
+          retry: true,
+          continuous: true,
+          batch_size: this.batch_size,
+          batches_limit: this.batches_limit,
+          filter: 'filtrerDoc/myfilter',
+          query_params: {roles: this.roles, codes_unions: this.codes_unions, codes_ops: this.codes_ops, codes_protocoles: this.codes_protocoles, sites: this.sites}
+      }).on('change', function (info) {
+          //alert(info)
+          //console.log('change', info)
+      }).on('paused', function (err) {
+          //alert('sync paused => '+ err)
+      }).on('active', function () {
+          // replicate resumed (e.g. new changes replicating, user went back online)
+          this.affichierMsg('Synchronisation en cours...')
+      }).on('denied', function (err) {
+          //console.log('denied', err)
+          this.affichierMsg('Erreur synchronisation, accès réfusé par le serveur!')
+      }).on('complete', function (info) {
+          //console.log('complete', info)
+          this.affichierMsg('Synchronisation terminée avec succes')
+      }).on('error', function (err) {
+          //console.log('error', err)
+          alert('Erreur synchronisation, problème réseau! => '+err)
+      });
+    //});
     }
-    //let remoteDatabase = new PouchDB(remoteSaved, optionsSaved);
-     //let remoteDatabase = new PouchDB(this.remoteSaved, optionsSaved);
-    //console.log('remoteDB', remoteDatabase)
-    //this.database.compact().then(() => {
-      //this.affichierMsg('Commpaction ok');
-      this.database.sync(this.remoteSaved, {
-        live: true,
-        retry: true,
-        continuous: true,
-        batch_size: this.batch_size,
-        batches_limit: this.batches_limit,
-        filter: 'filtrerDoc/myfilter',
-        query_params: {roles: this.roles, codes_unions: this.codes_unions}
-    }).on('change', function (info) {
-        //alert(info)
-        //console.log('change', info)
-    }).on('paused', function (err) {
-        //alert('sync paused => '+ err)
-    }).on('active', function () {
-        // replicate resumed (e.g. new changes replicating, user went back online)
-        this.affichierMsg('Synchronisation en cours...')
-    }).on('denied', function (err) {
-        //console.log('denied', err)
-        this.affichierMsg('Erreur synchronisation, accès réfusé par le serveur!')
-    }).on('complete', function (info) {
-        //console.log('complete', info)
-        this.affichierMsg('Synchronisation terminée avec succes')
-    }).on('error', function (err) {
-        //console.log('error', err)
-        alert('Erreur synchronisation, problème réseau! => '+err)
-    });
-  //});
 
 }
 
@@ -664,310 +841,377 @@ public syncIinfoDB(ip, nom) {
     }
 
   public syncAvecToast(metode: any = '') {
-    console.log('setting up db sync')
-    let t: boolean = false;
-    if(global.info_user && global.info_user.roles){
-      this.roles = global.info_user.roles
-    }else{
-      this.roles = []
-    }
-  
-    if(global.info_user && global.info_user.codes_unions){
-      this.codes_unions = global.info_user.codes_unions
-    }else{
-      this.codes_unions = []
-    }
-    //this.affichierMsg('Synchronisation en cours...');
-    let toast = this.toastCtl.create({
-      message: 'Synchronisation en cours...',
-      position: 'top',
-      duration: 1000,
-      showCloseButton: true,
-      closeButtonText: 'ok',
-      dismissOnPageChange: true
-        });
-
-        toast.present();
-        t = true
-        toast.onDidDismiss(() => t = false)
-   // }
-    //default connection
-    // if (!remote) {
-    //     remote = this.remoteDetails['remote-couch-url']
-    //     options = {
-    //         "auth.username": this.remoteDetails.username,
-    //         "auth.password": this.remoteDetails.password
-    //     }
-    // }
-
+    if(global.info_db.mode_connexion != 'online'){
+                
+      //console.log('setting up db sync')
+      let t: boolean = false;
+      if(global.info_user && global.info_user.roles){
+        this.roles = global.info_user.roles
+      }else{
+        this.roles = []
+      }
     
-    //var remoteSaved = "http://fumagaskiya-db.stats4sd.org/test"
-    //var remoteSaved = "http://127.0.0.1:5984/app_fuma"
-    var optionsSaved = {
-      skip_setup: true
-       // "auth.username": "fumagaskiya-app",
-       //"auth.password": "AA61E1481D12534A9CABE87465474"
-      //"auth.username": "admin",
-      //"auth.password": "admin"
-    }
-    //let remoteDatabase = new PouchDB(remoteSaved, optionsSaved);
-    this.remoteSaved = new PouchDB('http://'+ global.info_db.ip +'/'+ global.info_db.nom_db, this.pouchOpts);
-    global.remoteSaved = this.remoteSaved;
-    //console.log('remoteDB', remoteDatabase)
-    //alert(global.info_db.ip+'   '+global.info_db.nom_db + '  '+this.remoteSaved)
-    //this.database.compact().then(() => {
-      //this.affichierMsg('Commpaction ok');
-      this.database.sync(this.remoteSaved, {
-        //live: true,
-        //retry: true,
-        //continuous: true
-        timeout: 60000,
-        batch_size: this.batch_size,
-        batches_limit: this.batches_limit,
-        filter: 'filtrerDoc/myfilter',
-        query_params: {roles: this.roles, codes_unions: this.codes_unions}
-    }).on('change',  (info) => {
-        //alert(info)
-        //console.log('change', info)
-    }).on('paused',  (err) => {
-        //alert('sync paused => '+ err)
-        if(err){
-          alert('pause sync depuis serveur => '+err)
-        }
-    }).on('active',  ()  => {
-        // replicate resumed (e.g. new changes replicating, user went back online)
-    }).on('denied',  (err) => {
-        //console.log('denied', err)
-        if(t){
-          toast.dismiss()
-        }
-        this.affichierMsg('Erreur synchronisation, accès réfusé par le serveur!')
-    }).on('complete',  (info) => {
-        //console.log('complete', info)
-        if(t){
-          toast.dismiss()
-        }
-        this.affichierMsg('Synchronisation terminée avec succes')
-        //metode;
-    }).on('error',  (err) => {
-        //console.log('error', err)
-        if(t){
-          toast.dismiss()
-        }
+      if(global.info_user && global.info_user.codes_unions){
+        this.codes_unions = global.info_user.codes_unions
+      }else{
+        this.codes_unions = []
+      }
 
-        alert(err+ '. hote ==> '+'http://'+ global.info_db.ip +'/'+ global.info_db.nom_db)
-        this.affichierMsg('Erreur synchronisation, problème réseau!')
-        //metode;
-    });
-  //});
+      if(global.info_user && global.info_user.codes_ops){
+        this.codes_ops = global.info_user.codes_ops
+      }else{
+        this.codes_ops = []
+      }
+
+      if(global.info_user && global.info_user.codes_protocoles){
+        this.codes_protocoles = global.info_user.codes_protocoles
+      }else{
+        this.codes_protocoles = []
+      }
+
+      if(global.info_user && global.info_user.sites){
+        this.sites = global.info_user.sites
+      }else{
+        this.sites = []
+      }
+      //this.affichierMsg('Synchronisation en cours...');
+      let toast = this.toastCtl.create({
+        message: 'Synchronisation en cours...',
+        position: 'top',
+        duration: 1000,
+        showCloseButton: true,
+        closeButtonText: 'ok',
+        dismissOnPageChange: true
+          });
+
+          toast.present();
+          t = true
+          toast.onDidDismiss(() => t = false)
+    // }
+      //default connection
+      // if (!remote) {
+      //     remote = this.remoteDetails['remote-couch-url']
+      //     options = {
+      //         "auth.username": this.remoteDetails.username,
+      //         "auth.password": this.remoteDetails.password
+      //     }
+      // }
+
+      
+      //var remoteSaved = "http://fumagaskiya-db.stats4sd.org/test"
+      //var remoteSaved = "http://127.0.0.1:5984/app_fuma"
+      var optionsSaved = {
+        skip_setup: true
+        // "auth.username": "fumagaskiya-app",
+        //"auth.password": "AA61E1481D12534A9CABE87465474"
+        //"auth.username": "admin",
+        //"auth.password": "admin"
+      }
+      //let remoteDatabase = new PouchDB(remoteSaved, optionsSaved);
+      this.remoteSaved = new PouchDB('http://'+ global.info_db.ip +'/'+ global.info_db.nom_db, this.pouchOpts);
+      global.remoteSaved = this.remoteSaved;
+      //console.log('remoteDB', remoteDatabase)
+      //alert(global.info_db.ip+'   '+global.info_db.nom_db + '  '+this.remoteSaved)
+      //this.database.compact().then(() => {
+        //this.affichierMsg('Commpaction ok');
+        this.database.sync(this.remoteSaved, {
+          //live: true,
+          //retry: true,
+          //continuous: true
+          timeout: 60000,
+          batch_size: this.batch_size,
+          batches_limit: this.batches_limit,
+          filter: 'filtrerDoc/myfilter',
+          query_params: {roles: this.roles, codes_unions: this.codes_unions, codes_ops: this.codes_ops, codes_protocoles: this.codes_protocoles, sites: this.sites}
+      }).on('change',  (info) => {
+          //alert(info)
+          //console.log('change', info)
+      }).on('paused',  (err) => {
+          //alert('sync paused => '+ err)
+          if(err){
+            alert('pause sync depuis serveur => '+err)
+          }
+      }).on('active',  ()  => {
+          // replicate resumed (e.g. new changes replicating, user went back online)
+      }).on('denied',  (err) => {
+          //console.log('denied', err)
+          if(t){
+            toast.dismiss()
+          }
+          this.affichierMsg('Erreur synchronisation, accès réfusé par le serveur!')
+      }).on('complete',  (info) => {
+          //console.log('complete', info)
+          if(t){
+            toast.dismiss()
+          }
+          this.affichierMsg('Synchronisation terminée avec succes')
+          //metode;
+      }).on('error',  (err) => {
+          //console.log('error', err)
+          if(t){
+            toast.dismiss()
+          }
+
+          alert(err+ '. hote ==> '+'http://'+ global.info_db.ip +'/'+ global.info_db.nom_db)
+          this.affichierMsg('Erreur synchronisation, problème réseau!')
+          //metode;
+      });
+    //});
+    }else
+      alert('Vous etes en mode connecté')
 }
 
 
 public replicationDepuisServeur() {
-    console.log('setting up db sync')
-    let t: boolean = false;
-    if(global.info_user && global.info_user.roles){
-      this.roles = global.info_user.roles
-    }else{
-      this.roles = []
-    }
-  
-    if(global.info_user && global.info_user.codes_unions){
-      this.codes_unions = global.info_user.codes_unions
-    }else{
-      this.codes_unions = []
-    }
-    //this.affichierMsg('Synchronisation en cours...');
-    let toast = this.toastCtl.create({
-      message: 'Replication depuis le serveur en cours...',
-      position: 'top',
-      duration: 1000,
-      showCloseButton: true,
-      closeButtonText: 'ok',
-      dismissOnPageChange: true
-        });
+  if(global.info_db.mode_connexion != 'online'){
+                
+      //console.log('setting up db sync')
+      let t: boolean = false;
+      if(global.info_user && global.info_user.roles){
+        this.roles = global.info_user.roles
+      }else{
+        this.roles = []
+      }
+    
+      if(global.info_user && global.info_user.codes_unions){
+        this.codes_unions = global.info_user.codes_unions
+      }else{
+        this.codes_unions = []
+      }
 
-        toast.present();
-        t = true
-        toast.onDidDismiss(() => t = false)
-   // }
-    //default connection
-    // if (!remote) {
-    //     remote = this.remoteDetails['remote-couch-url']
-    //     options = {
-    //         "auth.username": this.remoteDetails.username,
-    //         "auth.password": this.remoteDetails.password
-    //     }
+      if(global.info_user && global.info_user.codes_ops){
+        this.codes_ops = global.info_user.codes_ops
+      }else{
+        this.codes_ops = []
+      }
+
+      if(global.info_user && global.info_user.codes_protocoles){
+        this.codes_protocoles = global.info_user.codes_protocoles
+      }else{
+        this.codes_protocoles = []
+      }
+
+      
+      if(global.info_user && global.info_user.sites){
+        this.sites = global.info_user.sites
+      }else{
+        this.sites = []
+      }
+      //this.affichierMsg('Synchronisation en cours...');
+      let toast = this.toastCtl.create({
+        message: 'Replication depuis le serveur en cours...',
+        position: 'top',
+        duration: 1000,
+        showCloseButton: true,
+        closeButtonText: 'ok',
+        dismissOnPageChange: true
+          });
+
+          toast.present();
+          t = true
+          toast.onDidDismiss(() => t = false)
     // }
+      //default connection
+      // if (!remote) {
+      //     remote = this.remoteDetails['remote-couch-url']
+      //     options = {
+      //         "auth.username": this.remoteDetails.username,
+      //         "auth.password": this.remoteDetails.password
+      //     }
+      // }
 
-    
-    //var remoteSaved = "http://fumagaskiya-db.stats4sd.org/test"
-    //var remoteSaved = "http://127.0.0.1:5984/app_fuma"
-    var optionsSaved = {
-      skip_setup: true
-       // "auth.username": "fumagaskiya-app",
-       //"auth.password": "AA61E1481D12534A9CABE87465474"
-      //"auth.username": "admin",
-      //"auth.password": "admin"
-    }
-    
-    //let remoteDatabase = new PouchDB(remoteSaved, optionsSaved);
-    this.remoteSaved = new PouchDB('http://'+ global.info_db.ip +'/'+ global.info_db.nom_db, this.pouchOpts);
-    global.remoteSaved = this.remoteSaved;
-    //console.log('remoteDB', remoteDatabase)
-    //alert(global.info_db.ip+'   '+global.info_db.nom_db + '  '+this.remoteSaved)
-    //this.database.compact().then(() => {
-      //this.affichierMsg('Commpaction ok');
-      this.database.replicate.from(this.remoteSaved, {
-        //live: true,
-        //retry: true,
-        //continuous: true
-        timeout: 60000,
-        batch_size: this.batch_size,
-        batches_limit: this.batches_limit,
-        filter: 'filtrerDoc/myfilter',
-        query_params: {roles: this.roles, codes_unions: this.codes_unions}
-    }).on('change',  (info) => {
-        //alert(info)
-        //console.log('change', info)
-    }).on('paused',  (err) => {
-        //console.log('paused', err)
-        if(err){
-          alert('pause replication depuis serveur => '+err)
-        }
-        
-    }).on('active',  ()  => {
-        // replicate resumed (e.g. new changes replicating, user went back online)
-    }).on('denied',  (err) => {
-        //console.log('denied', err)
-        if(t){
-          toast.dismiss()
-        }
-        this.affichierMsg('Erreur replication depuis le serveur, accès réfusé par le serveur!')
-    }).on('complete',  (info) => {
-        //console.log('complete', info)
-        if(t){
-          toast.dismiss()
-        }
-        this.affichierMsg('Replication depuis le serveur terminée avec succes')
-        //metode;
-    }).on('error',  (err) => {
-        //console.log('error', err)
-        if(t){
-          toast.dismiss()
-        }
+      
+      //var remoteSaved = "http://fumagaskiya-db.stats4sd.org/test"
+      //var remoteSaved = "http://127.0.0.1:5984/app_fuma"
+      var optionsSaved = {
+        skip_setup: true
+        // "auth.username": "fumagaskiya-app",
+        //"auth.password": "AA61E1481D12534A9CABE87465474"
+        //"auth.username": "admin",
+        //"auth.password": "admin"
+      }
+      
+      //let remoteDatabase = new PouchDB(remoteSaved, optionsSaved);
+      this.remoteSaved = new PouchDB('http://'+ global.info_db.ip +'/'+ global.info_db.nom_db, this.pouchOpts);
+      global.remoteSaved = this.remoteSaved;
+      //console.log('remoteDB', remoteDatabase)
+      //alert(global.info_db.ip+'   '+global.info_db.nom_db + '  '+this.remoteSaved)
+      //this.database.compact().then(() => {
+        //this.affichierMsg('Commpaction ok');
+        this.database.replicate.from(this.remoteSaved, {
+          //live: true,
+          //retry: true,
+          //continuous: true
+          timeout: 60000,
+          batch_size: this.batch_size,
+          batches_limit: this.batches_limit,
+          filter: 'filtrerDoc/myfilter',
+          query_params: {roles: this.roles, codes_unions: this.codes_unions, codes_ops: this.codes_ops, codes_protocoles: this.codes_protocoles, sites: this.sites}
+      }).on('change',  (info) => {
+          //alert(info)
+          //console.log('change', info)
+      }).on('paused',  (err) => {
+          //console.log('paused', err)
+          if(err){
+            alert('pause replication depuis serveur => '+err)
+          }
+          
+      }).on('active',  ()  => {
+          // replicate resumed (e.g. new changes replicating, user went back online)
+      }).on('denied',  (err) => {
+          //console.log('denied', err)
+          if(t){
+            toast.dismiss()
+          }
+          this.affichierMsg('Erreur replication depuis le serveur, accès réfusé par le serveur!')
+      }).on('complete',  (info) => {
+          //console.log('complete', info)
+          if(t){
+            toast.dismiss()
+          }
+          this.affichierMsg('Replication depuis le serveur terminée avec succes')
+          //metode;
+      }).on('error',  (err) => {
+          //console.log('error', err)
+          if(t){
+            toast.dismiss()
+          }
 
-        alert(err+ '. hote ==> '+'http://'+ global.info_db.ip +'/'+ global.info_db.nom_db)
-        this.affichierMsg('Erreur replication depuis le serveur, problème réseau!')
-        //metode;
-    });
-  //});
+          alert(err+ '. hote ==> '+'http://'+ global.info_db.ip +'/'+ global.info_db.nom_db)
+          this.affichierMsg('Erreur replication depuis le serveur, problème réseau!')
+          //metode;
+      });
+    //});
+    }else
+      alert('Vous etes en mode connecté')
 }
 
 
 public replicationVersServeur() {
-    console.log('setting up db sync')
-    //if(this.pl)
-    let t: boolean = false;
-    if(global.info_user && global.info_user.roles){
-      this.roles = global.info_user.roles
-    }else{
-      this.roles = []
-    }
-  
-    if(global.info_user && global.info_user.codes_unions){
-      this.codes_unions = global.info_user.codes_unions
-    }else{
-      this.codes_unions = []
-    }
-    //this.affichierMsg('Synchronisation en cours...');
-    let toast = this.toastCtl.create({
-      message: 'Replication vers le serveur en cours...',
-      position: 'top',
-      duration: 1000,
-      showCloseButton: true,
-      closeButtonText: 'ok',
-      dismissOnPageChange: true
-        });
+  if(global.info_db.mode_connexion != 'online'){
 
-        toast.present();
-        t = true
-        toast.onDidDismiss(() => t = false)
-   // }
-    //default connection
-    // if (!remote) {
-    //     remote = this.remoteDetails['remote-couch-url']
-    //     options = {
-    //         "auth.username": this.remoteDetails.username,
-    //         "auth.password": this.remoteDetails.password
-    //     }
-    // }
-
+      //console.log('setting up db sync')
+      //if(this.pl)
+      let t: boolean = false;
+      if(global.info_user && global.info_user.roles){
+        this.roles = global.info_user.roles
+      }else{
+        this.roles = []
+      }
     
-    //var remoteSaved = "http://fumagaskiya-db.stats4sd.org/test"
-    //var remoteSaved = "http://127.0.0.1:5984/app_fuma"
-    var optionsSaved = {
-      skip_setup: true
-       // "auth.username": "fumagaskiya-app",
-       //"auth.password": "AA61E1481D12534A9CABE87465474"
-      //"auth.username": "admin",
-      //"auth.password": "admin"
-    }
+      if(global.info_user && global.info_user.codes_unions){
+        this.codes_unions = global.info_user.codes_unions
+      }else{
+        this.codes_unions = []
+      }
 
- 
-    //let remoteDatabase = new PouchDB(remoteSaved, optionsSaved);
-    this.remoteSaved = new PouchDB('http://'+ global.info_db.ip +'/'+ global.info_db.nom_db, this.pouchOpts);
-    global.remoteSaved = this.remoteSaved;
-    //console.log('remoteDB', remoteDatabase)
-    //alert(global.info_db.ip+'   '+global.info_db.nom_db + '  '+this.remoteSaved)
-    //this.database.compact().then(() => {
-      //this.affichierMsg('Commpaction ok');
-      this.database.replicate.to(this.remoteSaved, {
-        //live: true,
-        //retry: true,
-        //continuous: true
-        timeout: 60000,
-        batch_size: this.batch_size,
-        batches_limit: this.batches_limit,
-        filter: 'filtrerDoc/myfilter',
-        query_params: {roles: this.roles, codes_unions: this.codes_unions}
-    }).on('change',  (info) => {
-        //alert(info)
-        //console.log('change', info)
-        //this.affichierMsg('Change '+info)
-    }).on('paused',  (err) => {
-        //console.log('paused', err)
-        if(err){
-          alert('pause replication vers servveur => '+err)
-        }
-        
-    }).on('active',  ()  => {
-        // replicate resumed (e.g. new changes replicating, user went back online)
-        //this.affichierMsg('Active')
-    }).on('denied',  (err) => {
-        //console.log('denied', err)
-        if(t){
-          toast.dismiss()
-        }
-        this.affichierMsg('Erreur replication vers le serveur, accès réfusé par le serveur!')
-    }).on('complete',  (info) => {
-        //console.log('complete', info)
-        if(t){
-          toast.dismiss()
-        }
-        this.affichierMsg('Replication vers le serveur terminée avec succes')
-        //metode;
-    }).on('error',  (err) => {
-        //console.log('error', err)
-        if(t){
-          toast.dismiss()
-        }
+      if(global.info_user && global.info_user.codes_ops){
+        this.codes_ops = global.info_user.codes_ops
+      }else{
+        this.codes_ops = []
+      }
 
-        alert(err+ '. hote ==> '+'http://'+ global.info_db.ip +'/'+ global.info_db.nom_db)
-        this.affichierMsg('Erreur replication vers le serveur, problème réseau!')
-        //metode;
-    });
- // });
+      if(global.info_user && global.info_user.codes_protocoles){
+        this.codes_protocoles = global.info_user.codes_protocoles
+      }else{
+        this.codes_protocoles = []
+      }
+
+      if(global.info_user && global.info_user.sites){
+        this.sites = global.info_user.sites
+      }else{
+        this.sites = []
+      }
+      //this.affichierMsg('Synchronisation en cours...');
+      let toast = this.toastCtl.create({
+        message: 'Replication vers le serveur en cours...',
+        position: 'top',
+        duration: 1000,
+        showCloseButton: true,
+        closeButtonText: 'ok',
+        dismissOnPageChange: true
+          });
+
+          toast.present();
+          t = true
+          toast.onDidDismiss(() => t = false)
+    // }
+      //default connection
+      // if (!remote) {
+      //     remote = this.remoteDetails['remote-couch-url']
+      //     options = {
+      //         "auth.username": this.remoteDetails.username,
+      //         "auth.password": this.remoteDetails.password
+      //     }
+      // }
+
+      
+      //var remoteSaved = "http://fumagaskiya-db.stats4sd.org/test"
+      //var remoteSaved = "http://127.0.0.1:5984/app_fuma"
+      var optionsSaved = {
+        skip_setup: true
+        // "auth.username": "fumagaskiya-app",
+        //"auth.password": "AA61E1481D12534A9CABE87465474"
+        //"auth.username": "admin",
+        //"auth.password": "admin"
+      }
+
+  
+      //let remoteDatabase = new PouchDB(remoteSaved, optionsSaved);
+      this.remoteSaved = new PouchDB('http://'+ global.info_db.ip +'/'+ global.info_db.nom_db, this.pouchOpts);
+      global.remoteSaved = this.remoteSaved;
+      //console.log('remoteDB', remoteDatabase)
+      //alert(global.info_db.ip+'   '+global.info_db.nom_db + '  '+this.remoteSaved)
+      //this.database.compact().then(() => {
+        //this.affichierMsg('Commpaction ok');
+        this.database.replicate.to(this.remoteSaved, {
+          //live: true,
+          //retry: true,
+          //continuous: true
+          timeout: 60000,
+          batch_size: this.batch_size,
+          batches_limit: this.batches_limit,
+          filter: 'filtrerDoc/myfilter',
+          query_params: {roles: this.roles, codes_unions: this.codes_unions, codes_ops: this.codes_ops, codes_protocoles: this.codes_protocoles, sites: this.sites}
+      }).on('change',  (info) => {
+          //alert(info)
+          //console.log('change', info)
+          //this.affichierMsg('Change '+info)
+      }).on('paused',  (err) => {
+          //console.log('paused', err)
+          if(err){
+            alert('pause replication vers servveur => '+err)
+          }
+          
+      }).on('active',  ()  => {
+          // replicate resumed (e.g. new changes replicating, user went back online)
+          //this.affichierMsg('Active')
+      }).on('denied',  (err) => {
+          //console.log('denied', err)
+          if(t){
+            toast.dismiss()
+          }
+          this.affichierMsg('Erreur replication vers le serveur, accès réfusé par le serveur!')
+      }).on('complete',  (info) => {
+          //console.log('complete', info)
+          if(t){
+            toast.dismiss()
+          }
+          this.affichierMsg('Replication vers le serveur terminée avec succes')
+          //metode;
+      }).on('error',  (err) => {
+          //console.log('error', err)
+          if(t){
+            toast.dismiss()
+          }
+
+          alert(err+ '. hote ==> '+'http://'+ global.info_db.ip +'/'+ global.info_db.nom_db)
+          this.affichierMsg('Erreur replication vers le serveur, problème réseau!')
+          //metode;
+      });
+  // });
+    }else
+      alert('Vous etes en mode connecté')
 }
 
 
@@ -1052,6 +1296,12 @@ getProgress(pending){
   delete(doc){
       this.database.remove(doc).catch((err) => console.log(err));
   }
+
+  deleteReturn(doc){
+    doc._deleted = true;
+    return this.database.put(doc);
+    //return this.database.remove(doc);
+}
 
   createDoc(doc){
     let dat = new Date();
@@ -1490,17 +1740,40 @@ getProgress(pending){
     return Id
   }
 
+  generateId1(operation, village/*, departement, commune, village*/){
+    //var pays = pays||'XX'
+    //var region = region||'XX'
+    //var department = departement || 'XX'
+    //var commune = commune || 'XX'
+    var village = village || 'XX'
+    //select 3 random numbers and random letter for up to 25,000 unique per department
+    //var chars='ABCDEFGHIJKLMNPQRSTUVWYZ'
+    var numbers='0123456789ABCDEFGHIJKLMNPQRSTUVWYZ'
+    var randomArray=[]
+    for(let i=0;i<20;i++){
+      var rand = Math.floor(Math.random()*34)
+      randomArray.push(numbers[rand])
+    }
+    //randomArray.push('-')
+    //var rand = Math.floor(Math.random()*24)
+    //randomArray.push(chars[rand])
+    var randomString=randomArray.join("");
+    var Id= operation+':'+village+/*'-'+department+'-'+commune +'-'+ village+*/ '-'+randomString 
+    return Id
+  }
+
   reset(){
  
       //this.data = null;
       let load = this.loadingCtrl.create({
-        content: 'Réinialisation en cours...'
+        content: 'Réinialisation de la BD en cours...'
       });
 
       load.present();
   
       this.database.destroy().then(() => {
         console.log("database removed");
+        this.logout('oui');
         this.isInstantiated = false;
         this.storage.remove('info_user').catch((err) => console.log(err));
         this.storage.remove('info_connexion').catch((err) => console.log(err));
@@ -1615,11 +1888,15 @@ getProgress(pending){
     });
   }
 
-  logout(){
-    this.showLoader('Déconnexion...');
+  logout(destroy: any = ''){
+    if(destroy == 'oui'){
+      this.showLoader('Déconnexion...');
+    }
     this.remoteSaved.logout((err, response) => {
       if (err) {
-        this.loading.dismissAll();
+        if(destroy == 'oui'){
+          this.loading.dismissAll();
+        }
         this.events.publish('user:login');
         //this.events.publish('user:login_com');
         return 'echec déconnexion';
@@ -1632,12 +1909,16 @@ getProgress(pending){
         this.storage.remove('info_connexion').catch((err) => console.log(err));
         global.info_connexion = null;
         global.info_user = null;
-        this.loading.dismissAll();
+        if(destroy == 'oui'){
+          this.loading.dismissAll();
+        }
         this.affichierMsg('Déconnexion terminée avec succès. \nVous êtes désormais hors ligne!')
         this.events.publish('user:login');
         return 'success';
       }else{
-        this.loading.dismiss();
+        if(destroy == 'oui'){
+          this.loading.dismiss();
+        }
         //this.storage.remove('info_user').catch((err) => console.log(err));
         //this.storage.remove('info_connexion').catch((err) => console.log(err));
         this.affichierMsg('Une erreur s\'est produite lors de la déconnexion. \n Veuillez réessayer plus tard!')
@@ -1846,7 +2127,69 @@ getProgress(pending){
     } );
   }
 
+  managerGetAllOps(){
 
+    //si non vide
+    let data: any;
+    if(data){
+      return data
+    }
+ 
+    
+    return new Promise ( resolve => {
+      this.database.allDocs({
+        include_docs: true,
+        startkey: 'fuma:op',
+        endkey: 'fuma:op:\uffff'
+      }).then((result) => {
+        //data = result.rows;
+        data = [];
+        let doc = result.rows.map((row) => {
+          if(!row.doc.data.deleted && row.doc.data.type == 'op'){
+            data.push(row);
+          }
+            
+        });
+
+        
+        resolve(data);
+
+       // this.database.changes({live: true, since: 'now', include_docs: true}).on('change', (change) => this.handleChange(change));
+      }).catch((err) => alert(err));
+    } );
+  }
+
+  managerGetAllProtocoles(){
+
+    //si non vide
+    let data: any;
+    if(data){
+      return data
+    }
+ 
+    
+    return new Promise ( resolve => {
+      this.database.allDocs({
+        include_docs: true,
+        startkey: 'fuma:protocole',
+        endkey: 'fuma:protocole:\uffff'
+      }).then((result) => {
+        //data = result.rows;
+        data = [];
+        let doc = result.rows.map((row) => {
+          if(!row.doc.data.deleted && row.doc.data.type == 'protocole'){
+            data.push(row);
+          }
+            
+        });
+
+        
+        resolve(data);
+
+       // this.database.changes({live: true, since: 'now', include_docs: true}).on('change', (change) => this.handleChange(change));
+      }).catch((err) => alert(err));
+    } );
+  }
 
 
   //***********************************************Fin manege user***************************************/

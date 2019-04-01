@@ -8,8 +8,10 @@
 
   <ion-navbar color="fuma_primary">
 
-    <ion-buttons start>
-     
+    <ion-buttons *ngIf="!modifierForm" left>
+      <button ion-button icon-only color="royal" (click)="dismiss()"> Fermer <!--ion-icon name="arrow-back"></ion-icon--></button>
+    </ion-buttons>
+    <ion-buttons start> 
       <button *ngIf="aProfile == true" ion-button icon-only color="royal" (click)="profile()">
         <ion-icon name="person"></ion-icon>
       </button>
@@ -265,7 +267,8 @@
     <ion-fab-list side="top">
       <button ion-fab mini *ngIf="(user && user.roles && global.estManager(user.roles)) || estManger" (click)="supprimer(op)" color="delete" ><ion-icon name="trash"></ion-icon></button>
       <button ion-fab mini *ngIf="(user && user.roles && global.estAnimataire(user.roles)) || estAnimataire" (click)="openMap(op.data.code_OP)" color="my_primary"><ion-icon name="pin"></ion-icon></button>
-      <!--button ion-fab mini *ngIf="(user && user.roles && global.estAnimataire(user.roles)) || estAnimataire" (click)="calculStatisitque(op.data.code_OP)" color="my_primary"><ion-icon name="stats"></ion-icon></button-->
+      <!--button ion-fab mini *ngIf="(user && user.roles && global.estAnimataire(user.roles)) || estAnimataire" (click)="restitution(op.data.code_OP)" color="my_primary"><ion-icon name="analytics"></ion-icon></button-->
+      <button ion-fab mini *ngIf="(user && user.roles && global.estAnimataire(user.roles)) || estAnimataire" (click)="getStatistique(op.data.code_OP)" color="my_primary"><ion-icon name="stats"></ion-icon></button>
       <button ion-fab *ngIf="(user && user.roles && global.estAnimataire(user.roles)) || estAnimataire" (click)="membresOP(op.data.num_aggrement, op.data.nom_OP, op.data.code_OP, op.data.code_union)" color="my_primary"><ion-icon name="people"></ion-icon></button>
       <button ion-fab mini *ngIf="(user && user.roles && global.estManager(user.roles)) || estManger" (click)="editer(op)" color="my_primary" ><ion-icon name="create"></ion-icon></button>
     </ion-fab-list>

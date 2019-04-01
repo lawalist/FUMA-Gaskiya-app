@@ -59,6 +59,7 @@ export class ProtocolePage {
   choix_varietes: any = '';
   type_culture: any = '';
   avec_repetition: any = '';
+  test_varietal: any = '';
   nb_repetition: any;
   avec_parcelle: any = '';
   nb_parcelle: any;
@@ -173,13 +174,14 @@ export class ProtocolePage {
         traitement:['oui', Validators.required],
         type_essais:['', Validators.required],
         avec_repetition:['non', Validators.required],
-        nb_repetition:['', ],
+        test_varietal:['non', Validators.required],
+        nb_repetition:['' ],
         avec_parcelle:['non', Validators.required],
-        nb_parcelle:['', ],
+        nb_parcelle:['' ],
         avec_bloc:['non', Validators.required],
         typologie:['non', Validators.required],
         annee_typologie:[''],
-        nb_bloc:['', ],
+        nb_bloc:['' ],
         //avec_code_association:['non', Validators.required],
         superficie_essais:[''],
         superficie_essais_modifiable:['non', Validators.required],
@@ -269,6 +271,7 @@ export class ProtocolePage {
 
       this.initForm();
       this.avec_repetition = 'non';
+      this.test_varietal = 'non';
       this.avec_parcelle = 'non';
       this.avec_bloc = 'non';
       this.typologie = 'non';
@@ -428,6 +431,7 @@ export class ProtocolePage {
           this.protocole1.type_essais = protocole.type_essais;
           this.protocole1.type_culture = protocole.type_culture;
           this.protocole1.avec_repetition = protocole.avec_repetition;
+          this.protocole1.test_varietal = protocole.test_varietal;
           this.protocole1.nb_repetition = protocole.nb_repetition;
           this.protocole1.avec_parcelle = protocole.avec_parcelle;
           this.protocole1.nb_parcelle = protocole.nb_parcelle;
@@ -788,6 +792,7 @@ export class ProtocolePage {
         traitement: protocole.data.traitement,
         type_essais: protocole.data.type_essais,
         avec_repetition: protocole.data.avec_repetition,
+        test_varietal: protocole.data.test_varietal,
         nb_repetition: protocole.data.nb_repetition,
         avec_parcelle: protocole.data.avec_parcelle,
         nb_parcelle: protocole.data.nb_parcelle,
@@ -833,6 +838,7 @@ export class ProtocolePage {
       //this.choix_varietes = this.protocole1.choix_varietes;
       //this.type_culture = this.protocole1.type_culture;
       this.avec_repetition = this.protocole1.avec_repetition;
+      this.test_varietal = this.protocole1.test_varietal;
       this.nb_repetition = this.protocole1.nb_repetition;
       this.avec_parcelle = this.protocole1.avec_parcelle;
       this.nb_parcelle = this.protocole1.nb_parcelle;
@@ -864,6 +870,7 @@ export class ProtocolePage {
     this.protocole1 = {};
     this.initForm();
     this.avec_repetition = 'non';
+    this.test_varietal = 'non';
     this.avec_parcelle = 'non';
     this.avec_bloc = 'non';
     this.typologie = 'non';
@@ -920,6 +927,7 @@ export class ProtocolePage {
       this.id = this.generateId();
       this.traitement = 'oui';
       this.avec_repetition = 'non';
+      this.test_varietal = 'non';
       this.avec_bloc = 'non';
       this.typologie = 'non';
       this.avec_parcelle = 'non';

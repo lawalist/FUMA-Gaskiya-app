@@ -63,7 +63,7 @@ export class CulturePage {
   estInstancier: boolean = false;
   ajoutForm: boolean = false;
   listeCultures:any  = ['Arachide', 'Igname', 'Maïs', 'Manioc', 'Mil', 'Niébé', 'Oignon', 'Pomme de terre', 'Riz', 'Sorgho', 'Tomate'];
-
+  sauvegarder: boolean = true;
 
   constructor(public navCtrl: NavController, public loadtingCtl: LoadingController, public toastCtl: ToastController, public ionicApp: IonicApp, public viewCtl: ViewController, public formBuilder: FormBuilder, public sim: Sim, public device: Device, public modelCtl: ModalController, public a: App, public events: Events, public navParams: NavParams, public menuCtl: MenuController, public printer: Printer, public file: File, public platform: Platform, public storage: Storage, public servicePouchdb: PouchdbProvider, public alertCtl: AlertController) {
   
@@ -225,6 +225,7 @@ partager(_id){
       type_variable: ['', Validators.required],
       valeur_variable: [''],
       unite: [''],
+      choix_variable: [''],
       est_obligatoire: [false],
       est_selectionne: [false],
       description_variable: ['']
@@ -240,6 +241,59 @@ partager(_id){
     const control = <FormArray>this.cultureForm.controls['variables'];
     control.removeAt(i);
   }
+
+  downVariable(i: number) {
+    this.sauvegarder = false;
+    const control = <FormArray>this.cultureForm.controls['variables'];
+    let currentControl = this.clone(control.at(i+1).value);
+    control.at(i+1).setValue(this.clone(control.at(i).value));// = control[i].value;
+    control.at(i).setValue(currentControl);
+    setTimeout(() => this.sauvegarder = true, 10)
+    //control.removeAt(i);
+  }
+
+
+  upVariable(i: number) {
+    this.sauvegarder = false;
+    const control = <FormArray>this.cultureForm.controls['variables'];
+    let currentControl = this.clone(control.at(i-1).value);
+    control.at(i-1).setValue(this.clone(control.at(i).value));// = control[i].value;
+    control.at(i).setValue(currentControl);
+    setTimeout(() => this.sauvegarder = true, 10)
+    //control.removeAt(i);
+  }
+
+  clone(obj) {
+    // Handle the 3 simple types, and null or undefined
+    if (null == obj || "object" != typeof obj) {return obj};
+
+    // Handle Date
+    if (obj instanceof Date) {
+        var copy = new Date();
+        copy.setTime(obj.getTime());
+        return copy;
+    }
+
+    // Handle Array
+    if (obj instanceof Array) {
+        let copy = [];
+        for (var i = 0, len = obj.length; i < len; i++) {
+            copy[i] = this.clone(obj[i]);
+        }
+        return copy;
+    }
+
+    // Handle Object
+    if (obj instanceof Object) {
+        let copy = {};
+        for (var attr in obj) {
+            if (obj.hasOwnProperty(attr)) copy[attr] = this.clone(obj[attr]);
+        }
+        return copy;
+    }
+
+    throw new Error("Unable to copy obj! Its type isn't supported.");
+}
 
 
   getInfoSimEmei(){
@@ -315,6 +369,9 @@ generateId(){
               if((culture.variables[i].code_variable == culture.variables[j].code_variable) || culture.variables[i].nom_variable == culture.variables[j].nom_variable){
                 res = 'code: ' +culture.variables[j].code_variable + '=> nom: '+culture.variables[j].nom_variable;
                 break;
+              }else if(culture.variables[i].choix_variable && (culture.variables[i].type_variable == 'choix' || culture.variables[i].type_variable == 'choix_multiple') && (!culture.variables[i].choix_variable || !culture.variables[i].choix_variable.length)){
+                res = -1;
+                break;
               }
             }
           }else{
@@ -331,86 +388,96 @@ generateId(){
 
 
   actionForm(){
-    let culture = this.cultureForm.value;
-    let res = this.existe(culture);
-    if(res == 1){
-      alert('Erreur! Enrégistrement impossible, cette culture existe déjà');
-    }else if(res != 0){
-      alert('Erreur! Enrégistrement impossible, variables en double: '+res);
-    }else{
-
-      if(this.ajoutForm && !this.modifierFrom){
-        let date = new Date();
-        
-         culture.deviceid = this.device.uuid;
-         culture.phonenumber = this.phonenumber;
-         culture.imei = this.imei; 
-         culture.update_deviceid = this.device.uuid;
-         culture.update_phonenumber = this.phonenumber;
-         culture.update_imei = this.imei;
-         culture.code = this.id;
-         
-         //union._id = 'fuma'+ id;
-         culture.end = date.toJSON();
-         //culture.code_essai = id;
-         //champs.id_champs = id;
-       
-         let cultureFinal: any = {};
-         cultureFinal._id = 'fuma'+':culture:'+ this.id;
-         cultureFinal.data = culture
-         let EF: any;
-         this.servicePouchdb.createDocReturn(cultureFinal).then((res) => {
-           /* let toast = this.toastCtl.create({
-               message: 'Essai bien enregistré!',
-               position: 'top',
-               duration: 1000
-             });*/
-             
-             
-             //alert(res.rev)
-             cultureFinal._rev = res.rev;
-             let E: any = {};
-             E.doc = cultureFinal;
-             
-             //this.viewCtl.dismiss(essaiFinal);
-           // this.zone.run(() => {
-             this.cultures.push(E);
-           }).catch((err) => alert('err ajout '+err));
- 
-          
-           this.ajoutForm = false;
-           this.reinitForm();
-
-        }else if(this.modifierFrom){
-          let date = new Date();
-          //let culture = this.cultureForm.value;
-          this.culture1.nom = culture.nom;
-          this.culture1.description = culture.description;
-          this.culture1.variables = culture.variables;
-          this.culture1.update_deviceid = this.device.uuid;
-          this.culture1.update_phonenumber = this.phonenumber;
-          this.culture1.update_imei = this.imei;
-          this.grandCulture.data = this.culture1;
-          this.servicePouchdb.updateDocReturn(this.grandCulture).then((res) => {
-            this.grandCulture._rev = res.rev;
-            this.culture = this.grandCulture;
-            this.reinitFormModifier();
-            this.modifierFrom = false;
-            this.detailCulture = true
-            this.ajoutForm = false;
-    
-          
-          let e: any = {};
-            e.doc = this.culture;
-            this.cultures.forEach((es, i) => {
-              if(es.doc._id === this.cultureAModifier._id){
-                this.cultures[i] = e ;
-              }
-              
-            });
-          });
+    if(this.sauvegarder){
+      let culture = this.cultureForm.value;
+      culture.variables.forEach((vr) => {
+        if(vr.type_variable == 'choix' || vr.type_variable == 'choix_multiple'){
+          vr.choix_variable = vr.choix_variable.toString().split(',');
         }
+      })
+
+      let res = this.existe(culture);
+      if(res == 1){ 
+        alert('Erreur! Enrégistrement impossible, cette culture existe déjà!');
+      }else if(res != 0){
+        alert('Erreur! Enrégistrement impossible, variables en double: '+res);
+      }if(res == -1){
+        alert('Erreur! Enrégistrement impossible, la liste des choix est vide!');
+      }else{
+
+        if(this.ajoutForm && !this.modifierFrom){
+          let date = new Date();
+          
+          culture.deviceid = this.device.uuid;
+          culture.phonenumber = this.phonenumber;
+          culture.imei = this.imei; 
+          culture.update_deviceid = this.device.uuid;
+          culture.update_phonenumber = this.phonenumber;
+          culture.update_imei = this.imei;
+          culture.code = this.id;
+          
+          //union._id = 'fuma'+ id;
+          culture.end = date.toJSON();
+          //culture.code_essai = id;
+          //champs.id_champs = id;
+        
+          let cultureFinal: any = {};
+          cultureFinal._id = 'fuma'+':culture:'+ this.id;
+          cultureFinal.data = culture
+          let EF: any;
+          this.servicePouchdb.createDocReturn(cultureFinal).then((res) => {
+            /* let toast = this.toastCtl.create({
+                message: 'Essai bien enregistré!',
+                position: 'top',
+                duration: 1000
+              });*/
+              
+              
+              //alert(res.rev)
+              cultureFinal._rev = res.rev;
+              let E: any = {};
+              E.doc = cultureFinal;
+              
+              //this.viewCtl.dismiss(essaiFinal);
+            // this.zone.run(() => {
+              this.cultures.push(E);
+            }).catch((err) => alert('err ajout '+err));
+  
+            
+            this.ajoutForm = false;
+            this.reinitForm();
+
+          }else if(this.modifierFrom){
+            let date = new Date();
+            //let culture = this.cultureForm.value;
+            this.culture1.nom = culture.nom;
+            this.culture1.description = culture.description;
+            this.culture1.variables = culture.variables;
+            this.culture1.update_deviceid = this.device.uuid;
+            this.culture1.update_phonenumber = this.phonenumber;
+            this.culture1.update_imei = this.imei;
+            this.grandCulture.data = this.culture1;
+            this.servicePouchdb.updateDocReturn(this.grandCulture).then((res) => {
+              this.grandCulture._rev = res.rev;
+              this.culture = this.grandCulture;
+              this.reinitFormModifier();
+              this.modifierFrom = false;
+              this.detailCulture = true
+              this.ajoutForm = false;
       
+            
+            let e: any = {};
+              e.doc = this.culture;
+              this.cultures.forEach((es, i) => {
+                if(es.doc._id === this.cultureAModifier._id){
+                  this.cultures[i] = e ;
+                }
+                
+              });
+            });
+          }
+      
+        }  
     }
     
 }
@@ -442,6 +509,14 @@ supprimer(culture){
   let alert = this.alertCtl.create({
     title: 'Suppression culture',
     message: 'Etes vous sûr de vouloir supprimer cette culture ?',
+    inputs: [
+      {
+        type: 'checkbox',
+        label: 'Supprimer définitivement!',
+        value: 'oui',
+        checked: false
+        }
+    ],
     buttons:[
       {
         text: 'Non',
@@ -450,22 +525,40 @@ supprimer(culture){
       },
       {
         text: 'Oui',
-        handler: () => {
-          this.servicePouchdb.deleteDocReturn(culture).then((res) => {
-            //let e: any = {};
-            //e.doc = essai;
-            this.cultures.forEach((es, i) => {
-              if(es.doc._id === culture._id){
-                this.cultures.splice(i, 1);
-              }
-              
-            });
-
-            this.detailCulture = false;
-            //this.navCtrl.pop();
-          }, err => {
-            console.log(err)
-          }) ;
+        handler: (data) => {
+          if(data.toString() === 'oui'){
+            this.servicePouchdb.deleteReturn(culture).then((res) => {
+              //let e: any = {};
+              //e.doc = essai;
+              this.cultures.forEach((es, i) => {
+                if(es.doc._id === culture._id){
+                  this.cultures.splice(i, 1);
+                }
+                
+              });
+  
+              this.detailCulture = false;
+              //this.navCtrl.pop();
+            }, err => {
+              console.log(err)
+            }) ;
+          }else{
+            this.servicePouchdb.deleteDocReturn(culture).then((res) => {
+              //let e: any = {};
+              //e.doc = essai;
+              this.cultures.forEach((es, i) => {
+                if(es.doc._id === culture._id){
+                  this.cultures.splice(i, 1);
+                }
+                
+              });
+  
+              this.detailCulture = false;
+              //this.navCtrl.pop();
+            }, err => {
+              console.log(err)
+            }) ;
+          }
           
         }
       }
@@ -729,7 +822,8 @@ editer(culture, dbclick: boolean = false){
             nom_variable: [variable.nom_variable, Validators.required],    
             type_variable: [variable.type_variable, Validators.required],
             valeur_variable: [variable.valeur_variable],
-            unite: [variable.unite, Validators.required],
+            unite: [variable.unite],
+            choix_variable: [variable.choix_variable],
             est_obligatoire: [variable.est_obligatoire],
             est_selectionne: [false],
             description_variable: [variable.description_variable]

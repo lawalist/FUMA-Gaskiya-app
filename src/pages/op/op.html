@@ -8,7 +8,7 @@
 
   <ion-navbar color="fuma_primary">
     
-    <ion-buttons *ngIf="ajoutForm" left>
+    <ion-buttons *ngIf="ajoutForm || fromUnion" left>
       <button ion-button icon-only color="royal" (click)="annuler()"> Fermer <!--ion-icon name="arrow-back"></ion-icon--></button>
     </ion-buttons>
 
@@ -145,12 +145,12 @@
     <table class="table table-striped table-bordered">
       <thead>
         <tr>
-        <th  >
+        <!--th  >
           <strong>Site</strong>
         </th>
         <th>
           <strong>Village</strong>
-        </th>
+        </th-->
         <th style="min-width: 150px" >
           <strong>Numéro aggrément</strong> 
         </th>
@@ -160,7 +160,7 @@
         <th  >
           <strong>Code op</strong>
         </th>
-        <th>
+        <!--th>
           <strong>Nombre de memebres</strong>
         </th>
         <th  >
@@ -168,7 +168,7 @@
         </th>
         <th  >
           <strong>Nombre de femmes</strong>
-        </th>
+        </th-->
           <th  >
           <strong>Nom union</strong>
         </th>
@@ -195,12 +195,12 @@
       <!--hr style="width: 375%"-->
       <tbody>
         <tr *ngFor="let op of ops" (click)="detail(op.doc, selectedSource)">
-          <td  >
+          <!--td  >
             {{op.doc.data.commune_nom}}
           </td>
           <td  >
             {{op.doc.data.village_nom}}
-          </td>
+          </td-->
           <td  >
             {{op.doc.data.num_aggrement}}
           </td>
@@ -208,9 +208,9 @@
             {{op.doc.data.nom_OP}}
           </td>
           <td  >
-            {{op.doc.data.code_OP}}
+            {{op.doc.data.code_op}}
           </td>
-          <td  >
+          <!--td  >
             {{op.doc.data.num_membre}}
           </td>
           <td  >
@@ -218,7 +218,7 @@
           </td>
           <td  >
             {{op.doc.data.num_femmes}}
-          </td>
+          </td-->
           <td  >
             {{op.doc.data.union_nom}}
           </td>
@@ -346,7 +346,7 @@
       <div style="padding-left: 15px;" class="error-box" *ngIf="opForm.controls['union_autre'].hasError('required') && opForm.controls['union_autre'].touched">* Le nom de l'union est obligatoire</div>
 
       <ion-item>
-        <ion-label floating>Numéro d'aggrément <span class="error-box">*</span></ion-label>
+        <ion-label floating>Numéro d'aggrément de l'op <span class="error-box">*</span></ion-label>
         <ion-input type="text" formControlName="num_aggrement" [(ngModel)]="num_aggrement" ></ion-input>
       </ion-item>
       <div style="padding-left: 15px;" class="error-box" *ngIf="opForm.controls['num_aggrement'].hasError('required') && opForm.controls['num_aggrement'].touched">* le numéro d'aggrément est obligatoir!</div>
@@ -364,10 +364,16 @@
       <div style="padding-left: 15px;" class="error-box" *ngIf="opForm.controls['code_OP'].hasError('required') && opForm.controls['code_OP'].touched">* le code de l'OP des est obligatoir!</div>
 
         <br>
-        <button ion-button type="submit" color="my_secondary" [disabled]="!opForm.valid" block>Sauvegarder</button>
+        <ion-row>
+          <ion-col>
+            <button ion-button type="submit" color="my_secondary" [disabled]="!opForm.valid" block>Sauvegarder</button>
+          </ion-col>
+          <ion-col>
+            <button ion-button color="my_primary" block (click)="annuler()">Annuler</button>
+          </ion-col>
+        </ion-row>
       </form>
-      <button ion-button color="my_primary" block (click)="annuler()">Annuler</button>
-
+      
   </div>
 
   <ion-fab *ngIf="!ajoutForm && selectedStyle != 'tableau' && ((user && user.roles && global.estManager(user.roles)) || estManger)" bottom right>

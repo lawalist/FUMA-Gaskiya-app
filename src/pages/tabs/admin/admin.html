@@ -31,21 +31,43 @@
     <ion-item style="text-align: center">Changer info DB
     </ion-item>
   </ion-card>
+  
+	<ion-card *ngIf="user && user.roles && global.estAnimataire(user.roles)" (click)="infoStructure()">
+	  <ion-item style="text-align: center">Info structure / organisation
+	  </ion-item>
+  </ion-card>
+
+  <!--ion-card (click)="updateEssaiDoubara()">
+    <ion-item style="text-align: center">Update doubara essai
+    </ion-item>
+  </ion-card-->
+
+
+  
+  <!--ion-card (click)="updateEssaiToNewForm()">
+    <ion-item style="text-align: center">Update essai
+    </ion-item>
+  </ion-card>
+
+  <ion-card (click)="addCodeOPPourEssai()">
+      <ion-item style="text-align: center">Add code op to essai
+      </ion-item>
+    </ion-card-->
 
    <ion-card *ngIf="user && user.roles && global.estAdmin(user.roles)" (click)="ajouterDesignDoc()">
     <ion-item style="text-align: center">Ajouter Serveur Design Doc
     </ion-item>
   </ion-card>
 
-  <ion-card (click)="infoStructure()">
-      <ion-item style="text-align: center">Info structure / organisation
-      </ion-item>
-    </ion-card>
-
-  <!--ion-card *ngIf="user && user.roles && global.estManager(user.roles)" (click)="ajouterLoalDesignDoc()">
-    <ion-item style="text-align: center">Ajouter Local Design Doc
+  <ion-card *ngIf="user && user.roles && global.estAdmin(user.roles)" (click)="syncUsers()">
+    <ion-item style="text-align: center">Sync db users
     </ion-item>
-  </ion-card-->
+  </ion-card>
+
+  <ion-card *ngIf="user && user.roles && global.estManager(user.roles)" (click)="ajouterLoalDesignDoc()">
+    <ion-item style="text-align: center">Ajouter/Mise à jour local Design Doc
+    </ion-item>
+  </ion-card>
 
   <!--ion-card *ngIf="user && user.roles && global.estManager(user.roles)" (click)="removeNouveauFilter()">
     <ion-item style="text-align: center">Supprimer nouveau filter
@@ -89,6 +111,58 @@
 
   <ion-card *ngIf="user && user.roles && global.estManager(user.roles)" (click)="calculNbMembreOP()">
     <ion-item style="text-align: center">Calculer nombre de membres par OP
+    </ion-item>
+  </ion-card>
+
+  <ion-card *ngIf="user && user.roles && global.estAdmin(user.roles)"  (click)="corrigerLongLat()">
+    <ion-item style="text-align: center">Réordonner coordonnées
+    </ion-item>
+  </ion-card>
+
+  <ion-card *ngIf="user && user.roles && global.estAdmin(user.roles)" (click)="get_IDEssaisASupprimer()">
+    <ion-item style="text-align: center">Suppression essais multiples
+    </ion-item>
+  </ion-card>
+
+
+  <ion-card *ngIf="user && user.roles && global.estAdmin(user.roles)" (click)="corrigerEssaiAvecGestionNombre()">
+    <ion-item style="text-align: center">Mise à jour essais avec ancienne version de protocole
+    </ion-item>
+  </ion-card>
+
+
+  <ion-card *ngIf="membres.length && unions.length && user && user.roles && global.estAdmin(user.roles)" (click)="ajouterNomUnionPourMembres(unions, membres)">
+    <ion-item style="text-align: center">ajouter nom union pour membres
+    </ion-item>
+  </ion-card>
+
+  <ion-card *ngIf="user && user.roles && global.estAdmin(user.roles)" (click)="ajouterCodeOpPourOP()">
+    <ion-item style="text-align: center">ajouter Code OP Pour Ops
+    </ion-item>
+  </ion-card>
+
+  <ion-card *ngIf="membres.length && user && user.roles && global.estAdmin(user.roles)" (click)="ajouterCodeOpPourMembres(membres)">
+    <ion-item style="text-align: center">ajouter Code OP Pour Membres
+    </ion-item>
+  </ion-card>
+
+  <ion-card *ngIf="membres.length && user && user.roles && global.estAdmin(user.roles)" (click)="ajouterNomOpPourMembres(ops, membres)">
+    <ion-item style="text-align: center">ajouter nom OP pour membres
+    </ion-item>
+  </ion-card>
+
+  <ion-card *ngIf="user && user.roles && global.estAdmin(user.roles)" (click)="addCodeOPPourChamp()">
+    <ion-item style="text-align: center">Ajouter Code OP pour Champ
+    </ion-item>
+  </ion-card>
+
+  <ion-card *ngIf="user && user.roles && global.estAdmin(user.roles)" (click)="addCodeOPPourTypologie()">
+    <ion-item style="text-align: center">Ajouter Code OP pour typologie
+    </ion-item>
+  </ion-card>
+
+  <ion-card *ngIf="membres.length && user && user.roles && global.estAdmin(user.roles)" (click)="ajouterCodeOpDansPhoto(membres)">
+    <ion-item style="text-align: center">Ajouter Code OP pour photo
     </ion-item>
   </ion-card>
 
@@ -150,6 +224,11 @@
     </ion-item>
   </ion-card-->
 
+  <!--ion-card (click)="updateCommune()">
+    <ion-item style="text-align: center">Update tachadoua
+    </ion-item>
+  </ion-card-->
+
 
   <ion-card *ngIf="user && user.roles && global.estAdmin(user.roles)" (click)="compacteLoacalDB()">
     <ion-item style="text-align: center">Compresser la base de données locale
@@ -158,6 +237,11 @@
 
   <ion-card *ngIf="user && user.roles && global.estAdmin(user.roles)" (click)="compacteRemoteDB()">
     <ion-item style="text-align: center">Compresseer la base donnnées serveur
+    </ion-item>
+  </ion-card>
+
+  <ion-card *ngIf="user && user.roles && global.estManager(user.roles)" (click)="viderCorbeille()">
+    <ion-item style="text-align: center"  color="delete">Vider corbeille
     </ion-item>
   </ion-card>
 

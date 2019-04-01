@@ -8,6 +8,10 @@
 
   <ion-navbar color="fuma_primary">
 
+    <ion-buttons *ngIf="fromUnion && (!ajoutForm && !detailMembre && !modifierForm)" left>
+      <button ion-button icon-only color="royal" (click)="annuler()"> Fermer <!--ion-icon name="arrow-back"></ion-icon--></button>
+    </ion-buttons>
+
     <ion-buttons *ngIf="ajoutForm || detailMembre || modifierForm" left>
       <button ion-button icon-only color="royal" (click)="annuler()"><ion-icon name="arrow-back"></ion-icon></button>
     </ion-buttons>
@@ -40,7 +44,7 @@
     </ion-buttons>
 
     <ion-buttons *ngIf="ajoutForm || modifierForm" start start>
-      <button ion-button icon-only color="royal" (click)="takePhoto()">
+      <button *ngIf="myPlatform" ion-button icon-only color="royal" (click)="takePhoto()">
         <ion-icon name="camera"></ion-icon>
       </button>
     </ion-buttons>
@@ -54,7 +58,7 @@
 
     <ion-buttons *ngIf="ajoutForm || modifierForm" end>
       <!--button ion-button icon-only color="royal" (click)="option()"><ion-icon name="options"></ion-icon></button-->
-      <button ion-button icon-only color="royal" (click)="chooseImage()">
+      <button *ngIf="myPlatform" ion-button icon-only color="royal" (click)="chooseImage()">
         <ion-icon name="image"></ion-icon>
       </button>
     </ion-buttons>
@@ -82,7 +86,7 @@
     <ion-row>
       <ion-col>
         <ion-item>
-          <ion-label floating>Choisir la source</ion-label>
+          <ion-label stacked>Choisir la source</ion-label>
           <ion-select [(ngModel)]="selectedSource" (ionChange)="choixSource()" cancelText="Annuler" okText="Ok" >
             <ion-option value="" selected disabled>Selectionnez la source</ion-option>
             <ion-option value="application">Application</ion-option>
@@ -93,7 +97,7 @@
       </ion-col>
       <ion-col>
         <ion-item>
-          <ion-label floating>Choisir la limite</ion-label>
+          <ion-label stacked>Choisir la limite</ion-label>
           <ion-select [(ngModel)]="selectedLimit" (ionChange)="choixLimit()" cancelText="Annuler" okText="Ok" >
             <ion-option value="" selected disabled>Selectionnez la limite</ion-option>
             <ion-option *ngFor="let limit of limits" [value]=limit>{{limit}}</ion-option>
@@ -103,7 +107,7 @@
     </ion-row>
 
     <ion-item>
-      <ion-label floating>Style affichage</ion-label>
+      <ion-label stacked>Style affichage</ion-label>
       <ion-select [(ngModel)]="selectedStyle" cancelText="Annuler" okText="Ok" >
         <ion-option value="" selected disabled>Selectionnez le style de la liste</ion-option>
         <ion-option value="liste" >Liste</ion-option>
@@ -112,11 +116,13 @@
     </ion-item>
 
     <ion-item>
-      <ion-label floating>Type de recherche</ion-label>
+      <ion-label stacked>Type de recherche</ion-label>
       <ion-select [(ngModel)]="typeRecherche" (ionChange)="typeRechercheChange()" cancelText="Annuler" okText="Ok" >
         <!--ion-option value="" selected disabled>Selectionnez le type de recherche</ion-option-->
         <ion-option value="matricule" >Par matricule membre</ion-option>
         <ion-option value="nom" >Par nom membre</ion-option>
+        <ion-option value="nom_union" >Par nom union</ion-option>
+        <ion-option value="code_union" >Par code union</ion-option>
         <ion-option value="site" >Par site</ion-option>
         <ion-option value="village" >Par village</ion-option>
       </ion-select>
@@ -125,6 +131,8 @@
     <ion-item>
       <ion-searchbar *ngIf="typeRecherche == 'nom'" placeholder="Rechercher par nom..." [showCancelButton]="shouldShowCancel" (ionInput)="getItems($event)"></ion-searchbar>
       <ion-searchbar *ngIf="typeRecherche == 'matricule'" [(ngModel)]="recherche" placeholder="Rechercher par matricule..." [showCancelButton]="shouldShowCancel" (ionInput)="getItems($event)"></ion-searchbar>
+      <ion-searchbar *ngIf="typeRecherche == 'nom_union'" placeholder="Rechercher par nom union..." [showCancelButton]="shouldShowCancel" (ionInput)="getItems($event)"></ion-searchbar>
+      <ion-searchbar *ngIf="typeRecherche == 'code_union'" placeholder="Rechercher par code union..." [showCancelButton]="shouldShowCancel" (ionInput)="getItems($event)"></ion-searchbar>
       <ion-searchbar *ngIf="typeRecherche == 'site'" placeholder="Rechercher par site..." [showCancelButton]="shouldShowCancel" (ionInput)="getItems($event)"></ion-searchbar>
       <ion-searchbar *ngIf="typeRecherche == 'village'" placeholder="Rechercher par village..." [showCancelButton]="shouldShowCancel" (ionInput)="getItems($event)"></ion-searchbar>
     </ion-item>
@@ -171,93 +179,174 @@
     </ion-item>    
   </ion-list>
 
+
   <ion-card class="info-card" *ngIf="membres.length > 0 && selectedStyle === 'tableau'">
     <ion-card-header>
       <h2 class="fond-gris"><strong>Liste des membres <span *ngIf="num_aggrement_op">de l'OP: {{nom_op}} - <strong>N.A:</strong> {{num_aggrement_op}}</span></strong></h2>
     </ion-card-header> 
+
+    <ion-item>
+      <ion-label stacked>Colonnes à afficher</ion-label>
+      <ion-select [(ngModel)]="colonnes" multiple="true" cancelText="Annuler" okText="Ok" >
+        <ion-option value="" selected disabled>Selectionnez les colonnes à afficher</ion-option>
+        <ion-option *ngFor="let col of allColonnes" [value]=col.code >{{col.nom}}</ion-option>
+        <!--ion-option value="nom" >Nom</ion-option>
+        <ion-option value="surnom" >Surnom</ion-option>
+        <ion-option value="sex" >Sex</ion-option>
+        <ion-option value="date_naissance" >Date de naissance</ion-option>
+        <ion-option value="nom_Op" >Nom OP</ion-option>
+        <ion-option value="code_OP" >Code OP</ion-option>
+        <ion-option value="op" >Num. agg. OP</ion-option>
+        <ion-option value="code_union" >Code union</ion-option>
+        <ion-option value="pays" >Id pays</ion-option>
+        <ion-option value="pays_nom" >Nom pays</ion-option>
+        <ion-option value="region" >Id region</ion-option>
+        <ion-option value="region_nom" >Nom region</ion-option>
+        <ion-option value="departement" >Id departement</ion-option>
+        <ion-option value="departement_nom" >Nom departement</ion-option>
+        <ion-option value="commune" >Id commune</ion-option>
+        <ion-option value="commune_nom" >Nom commune</ion-option>
+        <ion-option value="village" >Id village</ion-option>
+        <ion-option value="village_nom" >Nom village</ion-option>
+        <ion-option value="today" >Date enregistrement</ion-option-->
+      </ion-select>
+    </ion-item>
+
     <ion-scroll scrollX="true" scrollY="true" id="membre_tableau" style="height: 80vh"> 
 
     <table class="table table-striped table-bordered">
       <thead>
         <tr>
-        <th style="min-width: 105px" >
+        <th style="min-width: 105px" *ngIf="colonnes.indexOf('matricule') != -1">
           <strong>Matricule</strong>
         </th>
-        <th style="min-width: 130px" >
+        <th style="min-width: 130px" *ngIf="colonnes.indexOf('nom') != -1">
           <strong>Nom</strong>
         </th>
-        <th>
+        <th *ngIf="colonnes.indexOf('surnom') != -1">
           <strong>Surnom</strong>
         </th>
-        <th  >
+        <th  *ngIf="colonnes.indexOf('sex') != -1">
           <strong>Sex</strong>
         </th>
-        <th >
+
+        <th  *ngIf="colonnes.indexOf('date_naissance') != -1">
+          <strong>Date de naissance</strong>
+        </th>
+
+        <th *ngIf="colonnes.indexOf('nom_OP') != -1">
           <strong>Nom OP</strong> 
         </th>
-        <th  >
+        <th  *ngIf="colonnes.indexOf('code_OP') != -1">
           <strong>Code OP</strong>
         </th>
-        <th  >
+        <th  *ngIf="colonnes.indexOf('op') != -1">
+          <strong>Num. agg. OP</strong>
+        </th>
+        <th  *ngIf="colonnes.indexOf('code_union') != -1">
           <strong>Code union</strong>
         </th>
-        <th>
-          <strong>Pays</strong>
+        <th *ngIf="colonnes.indexOf('pays') != -1">
+          <strong>ID pays</strong>
         </th>
-        <th >
-          <strong>Région</strong>
+        <th *ngIf="colonnes.indexOf('pays_nom') != -1">
+          <strong>Nom pays</strong>
         </th>
-        <th style="min-width: 100px" >
-          <strong>Departement</strong>
+        <th *ngIf="colonnes.indexOf('region') != -1">
+          <strong>ID région</strong>
         </th>
-        <th  >
-          <strong>Commune/Site</strong>
+
+        <th *ngIf="colonnes.indexOf('region_nom') != -1">
+          <strong>Nom région</strong>
         </th>
-        <th  >
-          <strong>Village</strong>
+        <th *ngIf="colonnes.indexOf('departement') != -1">
+          <strong>ID departement</strong>
+        </th>
+        <th *ngIf="colonnes.indexOf('departement_nom') != -1">
+          <strong>Nom departement</strong>
+        </th>
+        <th  *ngIf="colonnes.indexOf('commune') != -1">
+          <strong>ID commune/Site</strong>
+        </th>
+        <th  *ngIf="colonnes.indexOf('commune_nom') != -1">
+          <strong>Nom commune/Site</strong>
+        </th>
+        <th  *ngIf="colonnes.indexOf('village') != -1">
+          <strong>ID village</strong>
+        </th>
+        <th *ngIf="colonnes.indexOf('village_nom') != -1" >
+          <strong>Nom village</strong>
+        </th>
+        <th  *ngIf="colonnes.indexOf('today') != -1">
+          <strong>Date enregistrement</strong>
         </th>
         </tr>
       </thead>
       <!--hr style="width: 375%"-->
       <tbody>
         <tr *ngFor="let membre of membres" (click)="detail(membre, true)">
-          <td  >
+          <td  *ngIf="colonnes.indexOf('matricule') != -1">
             {{membre.doc.data.matricule_Membre}}
           </td>
-          <td  >
+          <td  *ngIf="colonnes.indexOf('nom') != -1">
             {{membre.doc.data.nom_Membre}}
           </td>
-          <td  >
+          <td  *ngIf="colonnes.indexOf('surnom') != -1">
             {{membre.doc.data.surnom_Membre}}
           </td>
-          <td  >
+          <td  *ngIf="colonnes.indexOf('sex') != -1">
             <span *ngIf="membre.doc.data.genre == 'male'">Homme</span><span *ngIf="membre.doc.data.genre == 'female'">Femme</span>
           </td>
-          <td  >
+          <td  *ngIf="colonnes.indexOf('date_naissance') != -1">
+            {{membre.doc.data.date_naissance | date: 'dd-MM-yyyy'}}
+          </td>
+          <td  *ngIf="colonnes.indexOf('nom_OP') != -1">
             {{membre.doc.data.op_nom}}
           </td>
-          <td  >
+          <td  *ngIf="colonnes.indexOf('code_OP') != -1">
             {{membre.doc.data.op_code}}
           </td>
 
-          <td  >
+          <td  *ngIf="colonnes.indexOf('op') != -1">
+            {{membre.doc.data.op}}
+          </td>
+
+          <td  *ngIf="colonnes.indexOf('code_union') != -1">
             {{membre.doc.data.code_union}}
           </td>
           
-          <td  >
+          <td  *ngIf="colonnes.indexOf('pays') != -1">
+            {{membre.doc.data.pays}}
+          </td>
+          <td  *ngIf="colonnes.indexOf('pays_nom') != -1">
             {{membre.doc.data.pays_nom}}
           </td>
-          <td  >
+          <td  *ngIf="colonnes.indexOf('region') != -1">
+            {{membre.doc.data.region}}
+          </td>
+          <td  *ngIf="colonnes.indexOf('region_nom') != -1">
             {{membre.doc.data.region_nom}}
           </td>
-          <td  >
+          <td  *ngIf="colonnes.indexOf('departement') != -1">
+            {{membre.doc.data.departement}}
+          </td>
+          <td *ngIf="colonnes.indexOf('departement_nom') != -1" >
             {{membre.doc.data.departement_nom}}
           </td>
-          <td  >
+          <td  *ngIf="colonnes.indexOf('commune') != -1">
+            {{membre.doc.data.commune}}
+          </td>
+          <td  *ngIf="colonnes.indexOf('commune_nom') != -1">
             {{membre.doc.data.commune_nom}}
           </td>
-          <td  >
+          <td  *ngIf="colonnes.indexOf('village') != -1">
+            {{membre.doc.data.village}}
+          </td>
+          <td  *ngIf="colonnes.indexOf('village_nom') != -1">
             {{membre.doc.data.village_nom}}
+          </td>
+          <td *ngIf="colonnes.indexOf('today') != -1" >
+            {{membre.doc.data.today | date: 'dd-MM-yyyy'}}
           </td>         
         </tr>
       </tbody>
@@ -291,10 +380,15 @@
       </ion-card-header>
       <ion-card-content>          
         <ion-grid>
+            <hr style="width: 100%">
           <ion-row><ion-col class='meta-key'><strong>Matricule:</strong></ion-col> <ion-col class='meta-value'>{{membre.doc.data.matricule_Membre}} </ion-col>   </ion-row>
+          <hr style="width: 100%">
           <ion-row><ion-col class='meta-key'><strong>Nom:</strong></ion-col> <ion-col class='meta-value'>{{membre.doc.data.nom_Membre}} </ion-col>   </ion-row>
+          <hr style="width: 100%">
           <ion-row><ion-col class='meta-key'><strong>Surnom:</strong></ion-col> <ion-col class='meta-value'>{{membre.doc.data.surnom_Membre}} </ion-col>   </ion-row>
+          <hr style="width: 100%">
           <ion-row> <ion-col class='meta-key'><strong>Matricule:</strong> </ion-col> <ion-col class='meta-value'> {{membre.doc.data.matricule_Membre}} </ion-col> </ion-row>
+          <hr style="width: 100%">
           <ion-row>
             <ion-col class='meta-key'>
               <strong>Sex:</strong>
@@ -303,10 +397,11 @@
               <span *ngIf="membre.doc.data.genre == 'male'">Homme</span><span *ngIf="membre.doc.data.genre == 'female'">Femme</span>
             </ion-col>
           </ion-row>
-
+          <hr style="width: 100%">
           <ion-row> <ion-col class='meta-key'><strong>Date de naissance:</strong> </ion-col> <ion-col class='meta-value'> {{membre.doc.data.date_naissance | date: 'dd-MM-yyyy'}} </ion-col> </ion-row>
+          <hr style="width: 100%">
           <ion-row> <ion-col class='meta-key'><strong>Age:</strong> </ion-col> <ion-col class='meta-value'> {{age1}} </ion-col> </ion-row>
-          
+          <hr style="width: 100%">
           <!--ion-row *ngIf="membre.doc.data.classe != 'AUTRE' && !membre.doc.data.classe_nom">
             <ion-col class='meta-key'>
               <strong>Classe:</strong>
@@ -356,15 +451,26 @@
                 {{membre.doc.data.op_autre}}
             </ion-col>
           </ion-row>
+          <hr style="width: 100%">
           <ion-row>
             <ion-col class='meta-key'>
               <strong>Code OP:</strong>
             </ion-col> 
               <ion-col class='meta-value'>
-              {{membre.doc.data.op_code}}
+              {{membre.doc.data.code_op}}
               </ion-col>
           </ion-row>
+          <hr style="width: 100%">
             <ion-row>
+            <ion-col class='meta-key'>
+              <strong>Nom union:</strong>
+            </ion-col> 
+              <ion-col class='meta-value'>
+              {{membre.doc.data.nom_union}}
+              </ion-col>
+          </ion-row>
+          <hr style="width: 100%">
+          <ion-row>
             <ion-col class='meta-key'>
               <strong>Code union:</strong>
             </ion-col> 
@@ -372,14 +478,7 @@
               {{membre.doc.data.code_union}}
               </ion-col>
           </ion-row>
-          <ion-row>
-            <ion-col class='meta-key'>
-              <strong>Date enregistrement:</strong>
-            </ion-col> 
-              <ion-col class='meta-value'>
-              {{membre.doc.data.today | date: 'dd-MM-yyyy'}}
-              </ion-col>
-          </ion-row>
+          <hr style="width: 100%">
           <ion-row *ngIf="membre.doc.data.pays != 'AUTRE' && !membre.doc.data.pays_nom">
             <ion-col class='meta-key'>
               <strong>Pays:</strong> 
@@ -404,6 +503,7 @@
                 {{membre.doc.data.pays_autre}} 
             </ion-col>
           </ion-row>
+          <hr style="width: 100%">
           <ion-row *ngIf="membre.doc.data.region != 'AUTRE' && !membre.doc.data.region_nom">
             <ion-col class='meta-key'>
               <strong>Région:</strong>
@@ -428,6 +528,7 @@
               {{membre.doc.data.region_autre}}
             </ion-col>
           </ion-row>
+          <hr style="width: 100%">
           <ion-row *ngIf="membre.doc.data.departement != 'AUTRE' && !membre.doc.data.departement_nom">
             <ion-col class='meta-key'>
               <strong>Departement:</strong>
@@ -452,6 +553,7 @@
                 {{membre.doc.data.departement_autre}} 
             </ion-col>
           </ion-row>
+          <hr style="width: 100%">
           <ion-row *ngIf="membre.doc.data.commune != 'AUTRE' && !membre.doc.data.commune_nom">
             <ion-col class='meta-key'>
               <strong>Commune/Site:</strong> 
@@ -476,6 +578,7 @@
                 {{membre.doc.data.commune_autre}}
             </ion-col>
           </ion-row>
+          <hr style="width: 100%">
           <ion-row *ngIf="membre.doc.data.village != 'AUTRE' && !membre.doc.data.village_nom">
             <ion-col class='meta-key'>
               <strong>Village:</strong>
@@ -500,6 +603,16 @@
                 {{membre.doc.data.village_autre}}
             </ion-col>
           </ion-row>
+          <hr style="width: 100%">
+          <ion-row>
+            <ion-col class='meta-key'>
+              <strong>Date enregistrement:</strong>
+            </ion-col> 
+              <ion-col class='meta-value'>
+              {{membre.doc.data.today | date: 'dd-MM-yyyy'}}
+              </ion-col>
+          </ion-row>
+          
         </ion-grid>
       
       </ion-card-content>
@@ -535,6 +648,24 @@
 
     <ion-card text-center>
       <img [src]="photo" *ngIf="photo" id="imageid">
+
+      <ion-row *ngIf="!myPlatform">
+        <ion-col>
+          <ion-item>
+            <ion-label stacked>Photo profile<span class="error-box">*</span></ion-label>
+            <ion-input type="file" id="avatar" [(ngModel)]="fileInput"  (change)="onFileChange($event)" #fileInput1></ion-input>
+          </ion-item>
+        </ion-col>
+        <ion-col>
+          <br>
+          <button ion-button color="my_primary" block (click)="clearFile()" [disabled]="photo == 'SafeValue must use [property]=binding: assets/images/no-photo.png (see http://g.co/ng/security#xss)'">supprimer la photo</button>
+        </ion-col>
+      </ion-row>
+      <!--div class="form-group">
+        <label for="avatar">Avatar</label>
+        <input type="file" id="avatar" (change)="onFileChange($event)" #fileInput>
+        <button type="button" class="btn btn-sm btn-default" (click)="clearFile()">clear file</button>
+      </div-->
     </ion-card>
     
     
@@ -587,7 +718,7 @@
     </ion-row>
 
     <ion-item *ngIf="modifierForm">
-      <ion-label floating>Selectionnez le village <span class="error-box">*</span></ion-label>
+      <ion-label stacked>Selectionnez le village <span class="error-box">*</span></ion-label>
       <ion-select formControlName="village" [(ngModel)]="selectedVillageID" cancelText="Annuler" okText="Ok" (ionChange)="chargerAutreNomVillageID(selectedVillageID)" >
         <ion-option value="" selected disabled>Selectionnez le village</ion-option>
         <ion-option *ngFor="let villag of villages" [value]=villag.id >{{villag.nom}}</ion-option>
@@ -595,10 +726,10 @@
     </ion-item>
 
     <ion-item *ngIf="ajoutForm">
-      <ion-label floating>Selectionnez le village <span class="error-box">*</span></ion-label>
-      <ion-select formControlName="village" [(ngModel)]="selectedVillage" cancelText="Annuler" okText="Ok" (ionChange)="chargerAutreNomVillage(selectedVillage.id)" >
+      <ion-label stacked>Selectionnez le village <span class="error-box">*</span></ion-label>
+      <ion-select formControlName="village" [(ngModel)]="indexSelectedVillage" cancelText="Annuler" okText="Ok" (ionChange)="chargerAutreNomVillage(indexSelectedVillage)" >
         <ion-option value="" selected disabled>Selectionnez le village</ion-option>
-        <ion-option *ngFor="let villag of villages" [value]=villag >{{villag.nom}}</ion-option>
+        <ion-option *ngFor="let villag of villages; let i = index" [value]=i >{{villag.nom}}</ion-option>
       </ion-select>
     </ion-item>
     <div style="padding-left: 15px;" class="error-box" *ngIf="membreForm.controls['village'].hasError('required') && membreForm.controls['village'].touched">* le village est obligatoir!</div>
@@ -610,17 +741,18 @@
     <div style="padding-left: 15px;" class="error-box" *ngIf="membreForm.controls['village_autre'].hasError('required') && membreForm.controls['village_autre'].touched">* Le nom du village est obligatoire</div-->
 
   <ion-item *ngIf="modifierForm"> 
-    <ion-label floating>Selectionnez l'OP <span class="error-box">*</span></ion-label>
+    <ion-label stacked>Modifier l'OP <span class="error-box">*</span></ion-label>
     <ion-select formControlName="op" [(ngModel)]="selectedOPID" cancelText="Annuler" okText="Ok" (ionChange)="chargerAutreNomOPID(selectedOPID)" >
       <ion-option value="" selected disabled>Selectionnez l'OP</ion-option>
-      <span *ngFor="let o of ops">
+      <!--span *ngFor="let o of ops">
         <ion-option *ngIf="o.doc.data.num_aggrement" [value]=o.doc.data.num_aggrement >{{o.doc.data.code_OP}} - {{o.doc.data.nom_OP}}</ion-option>
-      </span>
+      </span-->
+      <ion-option *ngFor="let o of ops" [value]=o.doc.data.num_aggrement >{{o.doc.data.code_OP}} - {{o.doc.data.nom_OP}}</ion-option>
     </ion-select>
   </ion-item>
 
     <ion-item *ngIf="!num_aggrement_op && ajoutForm"> 
-      <ion-label floating>Selectionnez l'OP <span class="error-box">*</span></ion-label>
+      <ion-label stacked>Selectionnez l'OP <span class="error-box">*</span></ion-label>
       <ion-select formControlName="op" [(ngModel)]="selectedOP" cancelText="Annuler" okText="Ok" (ionChange)="chargerAutreNomOP(selectedOP.data.num_aggrement, selectedOP.data.code_OP)" >
         <ion-option value="" selected disabled>Selectionnez l'OP</ion-option>
         <span *ngFor="let o of ops">
@@ -669,7 +801,7 @@
     </ion-item>
 
     <ion-item> 
-      <ion-label floating>Selectionnez le sex <span class="error-box">*</span></ion-label>
+      <ion-label stacked>Selectionnez le sex <span class="error-box">*</span></ion-label>
       <ion-select formControlName="genre" [(ngModel)]="genre"  cancelText="Annuler" okText="Ok">
         <ion-option value="" selected disabled>Selectionnez le sex</ion-option>
         <ion-option value="male">Homme</ion-option>
@@ -704,10 +836,16 @@
 
 
       <br>
-      <button ion-button type="submit" color="my_secondary" [disabled]="!membreForm.valid" block>Sauvegarder</button>
+      <ion-row>
+        <ion-col>
+          <button ion-button color="my_primary" block (click)="annuler()">Annuler</button>
+        </ion-col>
+        <ion-col>
+          <button ion-button type="submit" color="my_secondary" [disabled]="!membreForm.valid" block>Sauvegarder</button>
+        </ion-col>
+      </ion-row>
     </form>
-    <button ion-button color="my_primary" block (click)="annuler()">Annuler</button>
-
+    
   </div>
 
   <ion-fab *ngIf="!ajoutForm && !modifierForm && !detailMembre && selectedStyle != 'tableau' && ((user && user.roles && global.estAnimataire(user.roles)) || estAnimataire)" bottom right>
@@ -729,10 +867,10 @@
     <button ion-fab color="fuma-green"><ion-icon name="arrow-dropup"></ion-icon></button>
     <ion-fab-list side="top">
       <button ion-fab mini *ngIf="(user && user.roles && global.estManager(user.roles)) || estManager" (click)="supprimer(membre.doc)" color="delete" ><ion-icon name="trash"></ion-icon></button>
-      <button ion-fab (click)="mesEssai(membre.doc.data.matricule_Membre, membre.doc.data.nom_Membre, membre.doc)" color="my_primary"><strong>ES</strong></button>
-      <button ion-fab (click)="mesChamps(membre.doc.data.matricule_Membre, membre.doc.data.nom_Membre, membre.doc)" color="my_primary"><strong>CH</strong></button>
-      <button ion-fab (click)="mesTypologies(membre.doc.data)" color="my_primary"><strong>TY</strong></button>
-      <!--button ion-fab (click)="copierPhotoDB(membre)" color="my_primary"><strong>TRp</strong></button-->
+      <button ion-fab mini (click)="mesEssai(membre.doc.data.matricule_Membre, membre.doc.data.nom_Membre, membre.doc)" color="my_primary"><strong>ES</strong></button>
+      <button ion-fab mini (click)="mesChamps(membre.doc.data.matricule_Membre, membre.doc.data.nom_Membre, membre.doc)" color="my_primary"><strong>CH</strong></button>
+      <button ion-fab mini (click)="mesTypologies(membre.doc.data)" color="my_primary"><strong>TY</strong></button>
+      <button ion-fab *ngIf="(user && user.roles && global.estManager(user.roles)) || estManager" (click)="onAngularPrint(membre)" color="my_primary"><strong>CtM</strong></button>
       
       <button ion-fab mini (click)="editer(membre, membre.photo, membre.photoDocId, membre.photoDocRev)" color="my_primary" ><ion-icon name="create"></ion-icon></button>
     </ion-fab-list>

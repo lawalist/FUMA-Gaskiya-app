@@ -37,7 +37,7 @@
           <ion-row> <ion-col class='meta-key'><strong>Code union:</strong></ion-col> <ion-col class='meta-value'> {{champ.data.code_union}} </ion-col> </ion-row>
           <ion-row> <ion-col class='meta-key'><strong>Appartenance:</strong></ion-col> <ion-col class='meta-value'> {{champ.data.appartenance}} </ion-col> </ion-row>
           <ion-row> <ion-col class='meta-key'><strong>Date enregistrement:</strong></ion-col> <ion-col class='meta-value'> {{champ.data.today | date: 'dd-MM-yyyy'}}</ion-col> </ion-row>
-          
+           
           <!--ion-row> <ion-col class='meta-key'><strong>deviceid:</strong></ion-col> <ion-col class='meta-value'> {{union.data.deviceid}}</ion-col> </ion-row>
           <ion-row> <ion-col class='meta-key'><strong>imei:</strong></ion-col> <ion-col class='meta-value'> {{union.data.imei}}</ion-col> </ion-row>
           <ion-row> <ion-col class='meta-key'><strong>phonenumber:</strong></ion-col> <ion-col class='meta-value'> {{union.data.phonenumber}}</ion-col> </ion-row>
@@ -147,12 +147,16 @@
     <ion-input type="text" formControlName="longitude" [(ngModel)]="longitude" ></ion-input>
   </ion-item>
 
-
     <br>
-    <button ion-button type="submit" color="my_secondary" [disabled]="!champsForm.valid" block>Sauvegarder</button>
+    <ion-row>
+      <ion-col>
+          <button ion-button color="my_primary" block (click)="annuler()">Annuler</button>
+      </ion-col>
+      <ion-col>
+          <button ion-button type="submit" color="my_secondary" [disabled]="!champsForm.valid" block>Sauvegarder</button>
+      </ion-col>
+    </ion-row>
   </form>
-  <button ion-button color="my_primary" block (click)="annuler()">Annuler</button>
-
 
  </div>
 

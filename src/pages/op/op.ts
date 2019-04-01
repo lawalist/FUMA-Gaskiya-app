@@ -65,13 +65,19 @@ export class OpPage {
   user: any = global.info_user;
   global:any = global;
   estManger: boolean = false;
+  fromUnion: any;
+  allUnionsForOP: any = []
+  allOPforOP: any = []
 
+  instanticer: boolean = false;
 
   constructor(public navCtrl: NavController, public loadingCtl: LoadingController, public platform: Platform, public viewCtl:ViewController, public printer: Printer, public file: File, public sim: Sim, public modelCtl: ModalController, public device: Device, public toastCtl: ToastController, public formBuilder: FormBuilder, public menuCtl: MenuController, public events: Events, public navParams: NavParams, public storage: Storage, public alertCtl: AlertController, public servicePouchdb: PouchdbProvider) {
     
     this.menuCtl.enable(false, 'options');
     this.menuCtl.enable(false, 'connexion');
     this.menuCtl.enable(false, 'profile');
+
+    this.fromUnion = this.navParams.data.fromUnion;
     
     events.subscribe('user:login', (user) => {
       if(user){
@@ -175,6 +181,7 @@ export class OpPage {
       type:['op'],
       nom_OP: ['', Validators.required],
       code_OP: ['', Validators.required],
+      code_op: [''],
       num_aggrement: ['', Validators.required],
       pays: [this.confLocaliteEnquete.pays.id, Validators.required],
       pays_nom: [this.confLocaliteEnquete.pays.nom],
@@ -426,6 +433,8 @@ export class OpPage {
     this.servicePouchdb.getPlageDocsRapide('fuma:union','fuma:union:\uffff').then((uA) => {
          this.servicePouchdb.getPlageDocsRapide('koboSubmission_fuma-union','koboSubmission_fuma-union\uffff').then((uK) => {
           this.unions = uA.concat(uK);
+          this.allUnionsForOP = uA.concat(uK);
+          //this.allUnionsForOP = this.unions
           //this.unions.push(this.autreUnion);
       }, err => console.log(err));
 
@@ -464,6 +473,7 @@ export class OpPage {
     if(this.verifierUniqueNon(op) === 0){
       alert('Le numéro de la reférence doivent être uniques!');
     }else{
+      op.code_op = op.code_OP;
       op.village = this.selectedVillage.id;
       op.village_nom = this.selectedVillage.nom;
       if(!this.num_aggrement_union){
@@ -514,6 +524,10 @@ export class OpPage {
   } 
 
   annuler(){
+
+    if(this.fromUnion && !this.ajoutForm){
+      this.viewCtl.dismiss()
+    }
     this.ajoutForm = false;
     //this.navCtrl.pop();
   }
@@ -662,122 +676,10 @@ export class OpPage {
     }, 2000);*/
   }
 
-  ionViewDidLoad(){
+ /* ionViewDidLoad(){
 
-    this.rechercher = true;
-    if(this.selectedSource === 'application'){
-      let opss: any = [];
-      this.servicePouchdb.getPlageDocsRapide('fuma:op:','fuma:op:\uffff').then((ops) => {
-        if(ops){
-          //opss = ops;
-          ops.forEach((o, index) => {
-            if(!o.doc.data.op/* || o.data.op !== ''*/){
-              opss.push(o)
-            }
-          });
-
-          if(this.num_aggrement_union){
-            let opu: any = [];
-            opss.forEach((o, i) => {
-              if(o.doc.data.union === this.num_aggrement_union){
-                opu.push(o)
-              }
-           });
-           this.ops = opu;
-           this.allOPs = opu;
-           this.rechercher = false;
-
-          }else{
-            this.ops = opss;
-            this.allOPs = opss;
-            this.rechercher = false;
-          }
-          //this.ops = opss;
-          //this.allOPs = opss;
-        }
-      });
-    }else if(this.selectedSource === 'kobo'){
-      let opss: any = [];
-      this.servicePouchdb.getPlageDocsRapide('koboSubmission_fuma-op','koboSubmission_fuma-op\uffff').then((ops) => {
-        if(ops){
-          ops.forEach((o, i) => {
-            if(!o.doc.data.op){
-             opss.push(o) ;
-             //this.allOPs.push(o);
-            }
-          });
-
-          if(this.num_aggrement_union){
-            let opu: any = [];
-            opss.forEach((o, i) => {
-              if(o.doc.data.union === this.num_aggrement_union){
-                opu.push(o)
-              }
-           });
-           this.ops = opu;
-           this.allOPs = opu;
-           this.rechercher = false;
-
-          }else{
-            this.ops = opss;
-            this.allOPs = opss;
-            this.rechercher = false;
-          }
-          //this.ops = opss ;
-          //this.allOPs = opss;
-          //this.ops = ops;
-          //this.allOPs = ops;
-        }
-      });
-    }else{
-      let A = [];
-      let opss: any = [];
-      this.servicePouchdb.getPlageDocsRapide('fuma:op','fuma:op:\uffff').then((opsA) => {
-        if(opsA){
-          //opss = ops;
-          opsA.forEach((o, index) => {
-            if(!o.doc.data.op/* || o.data.op !== ''*/){
-              A.push(o)
-            }
-          })
-        }
-        let k = [];
-         this.servicePouchdb.getPlageDocsRapide('koboSubmission_fuma-op','koboSubmission_fuma-op\uffff').then((opsK) => {
-           
-          opsK.forEach((o, i) => {
-            if(!o.doc.data.op){
-             k.push(o) ;
-             //this.allOPs.push(o);
-            }
-          })
-
-          opss = A.concat(k);
-          if(this.num_aggrement_union){
-            let opu: any = [];
-            opss.forEach((o, i) => {
-              if(o.doc.data.union === this.num_aggrement_union){
-                opu.push(o)
-              }
-           });
-           this.ops = opu;
-           this.allOPs = opu;
-           this.rechercher = false;
-
-          }else{
-            this.ops = opss;
-            this.allOPs = opss;
-            this.rechercher = false;
-          }
-
-          //this.ops = A.concat(k);
-          //this.allOPs = this.ops
-
-       
-      }, err => console.log(err));
-
-      }, err => console.log(err));      
-    }
-  }
+    
+  }*/
 
   getAllOPs(){
     let A = [];
@@ -826,11 +728,139 @@ export class OpPage {
     this.code_op = '';
   }
 
+  getAllOP(){
+    this.rechercher = true;
+    if(this.selectedSource === 'application'){
+      let opss: any = [];
+      this.servicePouchdb.getPlageDocsRapide('fuma:op:','fuma:op:\uffff').then((ops) => {
+        if(ops){
+          //opss = ops;
+          ops.forEach((o, index) => {
+            if(!o.doc.data.op/* || o.data.op !== ''*/){
+              opss.push(o)
+              this.allOPforOP.push(o.doc)
+            }
+          });
+
+          //this.allOPforOP = opss;
+          if(this.num_aggrement_union){
+            let opu: any = [];
+            opss.forEach((o, i) => {
+              if(o.doc.data.union === this.num_aggrement_union){
+                opu.push(o)
+              }
+           });
+           this.ops = opu;
+           this.allOPs = opu;
+           this.rechercher = false;
+           this.instanticer = true;
+
+          }else{
+            this.ops = opss;
+            this.allOPs = opss;
+            this.rechercher = false;
+            this.instanticer = true;
+          }
+          //this.ops = opss;
+          //this.allOPs = opss;
+        }
+      });
+    }else if(this.selectedSource === 'kobo'){
+      let opss: any = [];
+      this.servicePouchdb.getPlageDocsRapide('koboSubmission_fuma-op','koboSubmission_fuma-op\uffff').then((ops) => {
+        if(ops){
+          ops.forEach((o, i) => {
+            if(!o.doc.data.op){
+             opss.push(o) ;
+             //this.allOPs.push(o);
+             this.allOPforOP.push(o.doc)
+            }
+          });
+
+          //this.allOPforOP = opss;
+          if(this.num_aggrement_union){
+            let opu: any = [];
+            opss.forEach((o, i) => {
+              if(o.doc.data.union === this.num_aggrement_union){
+                opu.push(o)
+              }
+           });
+           this.ops = opu;
+           this.allOPs = opu;
+           this.rechercher = false;
+           this.instanticer = true;
+
+          }else{
+            this.ops = opss;
+            this.allOPs = opss;
+            this.rechercher = false;
+            this.instanticer = true;
+          }
+          //this.ops = opss ;
+          //this.allOPs = opss;
+          //this.ops = ops;
+          //this.allOPs = ops;
+        }
+      });
+    }else{
+      let A = [];
+      let opss: any = [];
+      this.servicePouchdb.getPlageDocsRapide('fuma:op','fuma:op:\uffff').then((opsA) => {
+        if(opsA){
+          //opss = ops;
+          opsA.forEach((o, index) => {
+            if(!o.doc.data.op/* || o.data.op !== ''*/){
+              A.push(o)
+            }
+          })
+        }
+        let k = [];
+         this.servicePouchdb.getPlageDocsRapide('koboSubmission_fuma-op','koboSubmission_fuma-op\uffff').then((opsK) => {
+           
+          opsK.forEach((o, i) => {
+            if(!o.doc.data.op){
+             k.push(o) ;
+             //this.allOPs.push(o);
+            }
+          })
+
+          opss = A.concat(k);
+          if(this.num_aggrement_union){
+            let opu: any = [];
+            opss.forEach((o, i) => {
+              if(o.doc.data.union === this.num_aggrement_union){
+                opu.push(o)
+              }
+           });
+           this.ops = opu;
+           this.allOPs = opu;
+           this.rechercher = false;
+           
+
+          }else{
+            this.ops = this.instanticer = true;opss;
+            this.allOPs = opss;
+            this.rechercher = false;
+            this.instanticer = true;
+          }
+
+          //this.ops = A.concat(k);
+          //this.allOPs = this.ops
+
+       
+      }, err => console.log(err));
+
+      }, err => console.log(err));      
+    }
+  }
 
   ionViewDidEnter() {
 
-        //this.getEssais()
-    this.servicePouchdb.remoteSaved.getSession((err, response) => {
+    if(!this.instanticer){
+      this.getAllOP();
+      this.chargerUnion();
+      //this.getEssais()
+      this.servicePouchdb.remoteSaved.getSession((err, response) => {
         if (err) {
           // network error
           //this.events.publish('user:login');
@@ -848,7 +878,6 @@ export class OpPage {
           this.aProfile = true;
         }
       });
-    this.chargerUnion();
 
     this.getInfoSimEmei();
     
@@ -864,6 +893,10 @@ export class OpPage {
       }
       //this.chargerVillages(this.confLocaliteEnquete.commune.id);
     }, err => alert('Une erreur c\'est produite lors du chergement de la localité de l\'enquette '));
+
+    this.instanticer = true;
+    }
+  
   }
 
   choixSource(){
@@ -1105,7 +1138,9 @@ export class OpPage {
 
 
   detail(op, selectedSource){
-    this.navCtrl.push('DetailOpPage', {'op': op, 'selectedSource': selectedSource});
+    let model = this.modelCtl.create('DetailOpPage', {'op': op, 'selectedSource': selectedSource, 'unions': this.allUnionsForOP, 'ops': this.allOPforOP, 'fromUnion': true}, {enableBackdropDismiss: false})
+    model.present()
+    //this.navCtrl.push('DetailOpPage', {'op': op, 'selectedSource': selectedSource});
   }
   sync(){
     this.servicePouchdb.syncAvecToast();

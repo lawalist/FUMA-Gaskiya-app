@@ -44,7 +44,7 @@ export class ModifierProfilePage {
         mdpass: [''],
         //confmdpass: ['', Validators.required],
         //date: [this.user.date, Validators.required],
-        sex: ['', Validators.required],
+        sex: [''],
     })
   }
 

@@ -7,7 +7,7 @@
 <ion-header>
 
   <ion-navbar color="fuma_primary">
-    <ion-buttons *ngIf="!ajoutForm" left>
+    <ion-buttons *ngIf="!ajoutForm || fromUnion" left>
       <button ion-button icon-only color="royal" (click)="dismiss()"> Fermer <!--ion-icon name="arrow-back"></ion-icon--></button>
     </ion-buttons> 
     <ion-buttons *ngIf="ajoutForm" left>
@@ -93,7 +93,7 @@
       <h6><strong>Nom producteur:</strong> {{champ.doc.data.nom_producteur}} <span *ngIf="champ.doc.data.surnom_producteur">({{champ.doc.data.surnom_producteur}})</span> </h6>
       <!--p><strong>Date:</strong> {{champ.doc.data.today | date: 'dd-MM-yyyy'}}</p-->
     </ion-item> 
-    <ion-item-options *ngIf="(user && user.roles && global.estManager(user.roles)) || estManger)" side="right">
+    <ion-item-options *ngIf="(user && user.roles && global.estManager(user.roles)) || estManger" side="right">
         <button ion-button icon-only color="my_primary" (click)="partager(champ.doc._id)">
           <ion-icon name="share"></ion-icon>
         </button>
@@ -120,6 +120,9 @@
         <tr>
         <th style="min-width: 105px" >
           <strong>Id</strong>
+        </th>
+        <th  >
+          <strong>Code op</strong>
         </th>
         <th  >
           <strong>Code union</strong>
@@ -156,6 +159,9 @@
         <tr *ngFor="let champ of champs" (click)="detail(champ.doc)">
           <td  >
             {{champ.doc.data.id_champs}}
+          </td>
+          <td  >
+            {{champ.doc.data.code_op}}
           </td>
           <td  >
             {{champ.doc.data.code_union}}
@@ -269,19 +275,25 @@
 
   <ion-item>
     <ion-label floating>Latitude</ion-label>
-    <ion-input type="text" formControlName="latitude"  [(ngModel)]="latitude" ></ion-input>
+    <ion-input type="number" formControlName="latitude"  [(ngModel)]="latitude" ></ion-input>
   </ion-item>
 
   <ion-item>
     <ion-label floating>Longitude</ion-label>
-    <ion-input type="text" formControlName="longitude" [(ngModel)]="longitude" ></ion-input>
+    <ion-input type="number" formControlName="longitude" [(ngModel)]="longitude" ></ion-input>
   </ion-item>
 
     <br>
-    <button ion-button type="submit" color="my_secondary" [disabled]="!champsForm.valid" block>Sauvegarder</button>
+    <ion-row>
+      <ion-col>
+        <button ion-button color="my_primary" block (click)="annuler()">Fermer</button>
+      </ion-col>
+      <ion-col>
+        <button ion-button type="submit" color="my_secondary" [disabled]="!champsForm.valid" block>Sauvegarder</button>
+      </ion-col>
+    </ion-row>
   </form>
-  <button ion-button color="my_primary" block (click)="annuler()">Fermer</button>
-
+  
 </div>
 
   <ion-fab *ngIf="!ajoutForm && selectedStyle == 'liste' && user && user.roles && global.estAnimataire(user.roles)" bottom right>

@@ -227,7 +227,8 @@ export class MyApp {
             { title: 'Gestion traitements', component: 'TraitementPage', role: 'animataire' },
             { title: 'Gestion typologie', component: 'TypologiePage', role: 'animataire' },
             { title: 'Gestion variétés', component: 'GestionVarietePage', role: 'animataire' },
-            { title: 'Gestion Essais old', component: 'EssaiPage', role: 'moderateur' },
+            { title: 'Pluviométrie', component: 'PluviometriePage', role: 'animataire' },
+            //{ title: 'Gestion Essais old', component: 'EssaiPage', role: 'moderateur' },
             { title: 'Admin', component: 'AdminPage', role: 'any' },           
      ];
 

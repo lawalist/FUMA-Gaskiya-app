@@ -100,7 +100,7 @@ export class DetailUnionPage {
       this.estAnimataire = global.estAnimataire(user.roles);
     }
   }
-    calculStatisitque(code_union){
+    restitution(code_union){
     let model = this.modelCtl.create('RestitutionPage', {'type': 'union', 'code_union': code_union});
     model.present();
     //this.calculerMembreAyantFaitUnEssai(essais);
@@ -108,6 +108,13 @@ export class DetailUnionPage {
     //this.visualisation(essais);
   }
 
+  getStatistique(code_union){
+    let model = this.modelCtl.create('StatistiquePage', {'type': 'union', 'code_union': code_union});
+    model.present();
+    //this.calculerMembreAyantFaitUnEssai(essais);
+    //this.calculerNombreEssaiParTraitement(essais, traitements);
+    //this.visualisation(essais);
+  }
   openMap(code_union){
     let modal = this.modelCtl.create('LeafletPage', { 'type': 'union', 'code_union': code_union });
     modal.present();

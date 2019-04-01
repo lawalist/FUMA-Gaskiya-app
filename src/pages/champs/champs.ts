@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { NavController, NavParams, LoadingController, Platform, ToastController, AlertController, ViewController, ModalController, IonicPage } from 'ionic-angular';
 import { PouchdbProvider } from '../../providers/pouchdb-provider';
+import {Diagnostic} from '@ionic-native/diagnostic/ngx';
 //import { AjouterChampsPage } from './ajouter-champs/ajouter-champs';
 //import { DetailChampsPage } from './detail-champs/detail-champs';
 //import { TypeSolePage } from '../type-sole/type-sole';
@@ -43,6 +44,7 @@ export class ChampsPage {
   matricule_producteur1: any;
   nom_producteur: any;
   code_union: any;
+  code_op: any;
   surnom_producteur: any;
   membre: any;
   typeSolesSelected: any = [];
@@ -66,9 +68,12 @@ export class ChampsPage {
   a_matricule: boolean = false;
   user: any = global.info_user;
   global:any = global;
+  fromUnion: any;
 
 
-  constructor(public navCtrl: NavController, public loadtingCtl: LoadingController, public viewCtl: ViewController, public platform: Platform, public printer: Printer, public file: File, public toastCtl: ToastController, public formBuilder: FormBuilder, public modelCtl: ModalController, public ServiceAutoCompletion: AutoCompletion, public sim: Sim, public geolocation: Geolocation, public device: Device,  public navParams: NavParams, public storage: Storage, public servicePouchdb: PouchdbProvider, public alertCtl: AlertController) {
+  constructor(public navCtrl: NavController, public diagnostic: Diagnostic, public loadtingCtl: LoadingController, public viewCtl: ViewController, public platform: Platform, public printer: Printer, public file: File, public toastCtl: ToastController, public formBuilder: FormBuilder, public modelCtl: ModalController, public ServiceAutoCompletion: AutoCompletion, public sim: Sim, public geolocation: Geolocation, public device: Device,  public navParams: NavParams, public storage: Storage, public servicePouchdb: PouchdbProvider, public alertCtl: AlertController) {
+    
+    this.fromUnion = this.navParams.data.fromUnion
     if(this.navParams.data.matricule_producteur){
       this.matricule_producteur = this.navParams.data.matricule_producteur;
       this.matricule_producteur1 = this.navParams.data.matricule_producteur;
@@ -353,14 +358,46 @@ initForm(){
 
   getPosition(){
     this.msg('Obtention des coordonnées en cours...');
-  this.geolocation.getCurrentPosition(/*{enableHighAccuracy: true, maximumAge: 3000, timeout: 5000 }*/).then((resp) => {
-      this.longitude = resp.coords.longitude;
-      this.latitude = resp.coords.latitude;
-      this.msg('Coordonnées obtenues avec succes!')
-    }, err => {
-      this.msg('Une erreur c\'est produite lors de l\obtention des coordonnées. \nVeuillez reéssayer plus tard!')
-      console.log('')
-    });
+      this.geolocation.getCurrentPosition({enableHighAccuracy: true, maximumAge: 30000, timeout: 30000 }).then((resp) => {
+          this.longitude = resp.coords.longitude;
+          this.latitude = resp.coords.latitude;
+          this.msg('Coordonnées obtenues avec succes!')
+      }, err => {
+          this.msg('Une erreur c\'est produite lors de l\obtention des coordonnées. \nVeuillez reéssayer plus tard!')
+          console.log('')
+      });
+
+    /*if(this.platform.is('android')){
+      this.diagnostic.isLocationEnabled().then((enabled) => {
+        console.log("Le GPS est "+(enabled ? "activié" : "désactivé"));
+        if(!enabled){
+          this.diagnostic.switchToLocationSettings();
+        }else {
+            this.msg('Obtention des coordonnées en cours...');
+            this.geolocation.getCurrentPosition({enableHighAccuracy: true, maximumAge: 30000, timeout: 30000 }).then((resp) => {
+                this.longitude = resp.coords.longitude;
+                this.latitude = resp.coords.latitude;
+                this.msg('Coordonnées obtenues avec succes!')
+            }, err => {
+                this.msg('Une erreur c\'est produite lors de l\obtention des coordonnées. \nVeuillez reéssayer plus tard!')
+                console.log('')
+            });
+        }
+      }).catch((err) => {
+        alert("Erreur: "+err)
+      })
+    }else{
+      this.msg('Obtention des coordonnées en cours...');
+      this.geolocation.getCurrentPosition({enableHighAccuracy: true, maximumAge: 30000, timeout: 30000 }).then((resp) => {
+          this.longitude = resp.coords.longitude;
+          this.latitude = resp.coords.latitude;
+          this.msg('Coordonnées obtenues avec succes!')
+      }, err => {
+          this.msg('Une erreur c\'est produite lors de l\obtention des coordonnées. \nVeuillez reéssayer plus tard!')
+          console.log('')
+      });
+    }*/
+      
   }
 
   createDate(jour: any, moi: any, annee: any){
@@ -385,7 +422,7 @@ initForm(){
   
     this.sim.getSimInfo().then(
       (info) => {
-        if(info.cards.length > 0){
+        if(info.cards && info.cards.length > 0){
           info.cards.forEach((infoCard, i) => {
             if(infoCard.phoneNumber){
               this.phonenumber = infoCard.phoneNumber;
@@ -433,6 +470,7 @@ initForm(){
         this.selectedProducteur = prod.doc;
         this.nom_producteur = prod.doc.data.nom_Membre;
         this.code_union = prod.doc.data.code_union;
+        this.code_op = prod.doc.data.code_op;
         this.surnom_producteur = prod.doc.data.surnom_Membre;
         this.generecodeChamps(this.selectedProducteur.data.matricule_Membre)
       }
@@ -467,8 +505,9 @@ initForm(){
   ajouterChamps(){
     let date = new Date();
     let champs = this.champsForm.value;
-    champs.matricule_producteur = this.selectedProducteur.data.matricule_Membre;
+    champs.matricule_producteur = this.selectedProducteur.data.matricule_Membre; 
     champs.code_union = this.selectedProducteur.data.code_union;
+    champs.code_op = this.selectedProducteur.data.code_op;
     champs.surnom_producteur = this.selectedProducteur.data.surnom_Membre;
     //champs.nom_producteur = this.selectedProducteur.data.nom_Membre;
     champs.deviceid = this.device.uuid;
@@ -675,7 +714,7 @@ initForm(){
   }
 
    ajouter(){
-    if(this.typeSoles1.length > 0){
+    if(this.typeSoles1 && this.typeSoles1.length > 0){
       this.ajoutForm = true;
      /* if(this.matricule_producteur){
         let model = this.modelCtl.create('AjouterChampsPage', {'matricule_producteur': this.matricule_producteur, 'nom':this.nom_producteur, 'membre': this.membre});

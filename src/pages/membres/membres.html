@@ -647,7 +647,8 @@
   <div *ngIf="ajoutForm || modifierForm">
 
     <ion-card text-center>
-      <img [src]="photo" *ngIf="photo" id="imageid">
+      <img [src]="photo" *ngIf="photo && photo != ''" id="imageid">
+      <img src="assets/images/no-photo.png" *ngIf="!photo || photo == ''" id="imageid">
 
       <ion-row *ngIf="!myPlatform">
         <ion-col>
@@ -658,9 +659,16 @@
         </ion-col>
         <ion-col>
           <br>
-          <button ion-button color="my_primary" block (click)="clearFile()" [disabled]="photo == 'SafeValue must use [property]=binding: assets/images/no-photo.png (see http://g.co/ng/security#xss)'">supprimer la photo</button>
+          <button ion-button color="my_primary" block (click)="clearFile()" [disabled]="!photo || photo == 'SafeValue must use [property]=binding: assets/images/no-photo.png (see http://g.co/ng/security#xss)'">supprimer la photo</button>
         </ion-col>
       </ion-row>
+
+      <ion-row *ngIf="myPlatform">
+        <br>
+        <button ion-button color="my_primary" block (click)="clearFile()" [disabled]="!photo || photo == 'SafeValue must use [property]=binding: assets/images/no-photo.png (see http://g.co/ng/security#xss)'">supprimer la photo</button>
+      </ion-row>
+      
+      
       <!--div class="form-group">
         <label for="avatar">Avatar</label>
         <input type="file" id="avatar" (change)="onFileChange($event)" #fileInput>
@@ -676,64 +684,64 @@
       <ion-datetime displayFormat="DD/MM/YYYY" formControlName="today" [(ngModel)]="today" cancelText="Annuler" doneText="Valider" disabled></ion-datetime>
     </ion-item>
 
+
     <ion-row>
       <ion-col>
         <ion-item>
-          <ion-label floating>Pays <span class="error-box">*</span></ion-label>
-          <ion-input type="text" formControlName="pays" [(ngModel)]="pays" [hidden]="pays_nom"></ion-input>
-          <ion-input *ngIf="pays_nom" type="text" formControlName="pays_nom" [(ngModel)]="pays_nom" disabled></ion-input>
-          <!--ion-input *ngIf="pays_autre != 'NA'" type="text" formControlName="pays_autre" [(ngModel)]="pays_autre" disabled></ion-input-->
-
-        </ion-item>
+            <ion-label stacked>Selectionnez le pays <span class="error-box">*</span></ion-label>
+            <ion-select formControlName="pays" [(ngModel)]="selectedPays" cancelText="Annuler" okText="Ok" (ionChange)="chargerSousLocalite(selectedPays, 'pays')" >
+              <ion-option value="" selected disabled>Selectionnez le le pays</ion-option>
+              <ion-option *ngFor="let p of pays" [value]=p.id >{{p.nom}}</ion-option>
+            </ion-select>
+          </ion-item>
+          <div style="padding-left: 15px;" class="error-box" *ngIf="membreForm.controls['pays'].hasError('required') && membreForm.controls['pays'].touched">* le pays est obligatoir!</div>
       </ion-col>
 
       <ion-col>
-        <ion-item>
-          <ion-label floating>Région<span class="error-box">*</span></ion-label>
-          <ion-input type="text" formControlName="region" [(ngModel)]="region" [hidden]="region_nom"></ion-input>
-          <ion-input *ngIf="region_nom" type="text" formControlName="region_nom" [(ngModel)]="region_nom" disabled></ion-input>
-          <!--ion-input *ngIf="region_autre != 'NA'" type="text" formControlName="region_autre" [(ngModel)]="region_autre" disabled></ion-input-->
-        </ion-item>
+          <ion-item>
+              <ion-label stacked>Selectionnez le region <span class="error-box">*</span></ion-label>
+              <ion-select [disabled]="!selectedPays || selectedPays == ''" formControlName="region" [(ngModel)]="selectedRegion" cancelText="Annuler" okText="Ok" (ionChange)="chargerSousLocalite(selectedRegion, 'region')" >
+                <ion-option value="" selected disabled>Selectionnez le region</ion-option>
+                <ion-option *ngFor="let r of regions" [value]=r.id >{{r.nom}}</ion-option>
+              </ion-select>
+            </ion-item>
+            <div style="padding-left: 15px;" class="error-box" *ngIf="membreForm.controls['region'].hasError('required') && membreForm.controls['region'].touched">* le region est obligatoir!</div>
       </ion-col>
     </ion-row>
 
     <ion-row>
       <ion-col>
-        <ion-item>
-          <ion-label floating>Departement <span class="error-box">*</span></ion-label>
-          <ion-input type="text" formControlName="departement" [(ngModel)]="departement" [hidden]="departement_nom"></ion-input>
-          <ion-input *ngIf="departement_nom" type="text" formControlName="departement_nom" [(ngModel)]="departement_nom" disabled></ion-input>
-          <!--ion-input *ngIf="departement_autre != 'NA'" type="text" formControlName="departement_autre" [(ngModel)]="departement_autre" disabled></ion-input-->
-        </ion-item>
+          <ion-item>
+              <ion-label stacked>Selectionnez le departement</ion-label>
+              <ion-select [disabled]="!selectedRegion || selectedRegion == ''" formControlName="departement" [(ngModel)]="selectedDepartement" cancelText="Annuler" okText="Ok" (ionChange)="chargerSousLocalite(selectedDepartement, 'departement')" >
+                <ion-option value="" selected disabled>Selectionnez le departement</ion-option>
+                <ion-option *ngFor="let d of departements" [value]=d.id >{{d.nom}}</ion-option>
+              </ion-select>
+            </ion-item>
+            <div style="padding-left: 15px;" class="error-box" *ngIf="membreForm.controls['departement'].hasError('required') && membreForm.controls['departement'].touched">* le departement est obligatoir!</div>
       </ion-col>
 
       <ion-col>
-        <ion-item>
-          <ion-label floating>Commune<span class="error-box">*</span></ion-label>
-          <ion-input type="text" formControlName="commune" [(ngModel)]="commune" [hidden]="commune_nom" ></ion-input>
-          <ion-input *ngIf="commune_nom" type="text" formControlName="commune_nom" [(ngModel)]="commune_nom" disabled></ion-input>
-          <!--ion-input *ngIf="commune_autre != 'NA'" type="text" formControlName="commune_autre" [(ngModel)]="commune_autre" disabled></ion-input-->
-        </ion-item>
+          <ion-item>
+              <ion-label stacked>Selectionnez le commune</ion-label>
+              <ion-select [disabled]="!selectedDepartement || selectedDepartement == ''" formControlName="commune" [(ngModel)]="selectedCommune" cancelText="Annuler" okText="Ok" (ionChange)="chargerSousLocalite(selectedCommune, 'commune')" >
+                <ion-option value="" selected disabled>Selectionnez le commune</ion-option>
+                <ion-option *ngFor="let c of communes" [value]=c.id >{{c.nom}}</ion-option>
+              </ion-select>
+            </ion-item>
+            <div style="padding-left: 15px;" class="error-box" *ngIf="membreForm.controls['commune'].hasError('required') && membreForm.controls['commune'].touched">* le commune est obligatoir!</div>
       </ion-col>
-    </ion-row>
+    </ion-row> 
 
-    <ion-item *ngIf="modifierForm">
-      <ion-label stacked>Selectionnez le village <span class="error-box">*</span></ion-label>
-      <ion-select formControlName="village" [(ngModel)]="selectedVillageID" cancelText="Annuler" okText="Ok" (ionChange)="chargerAutreNomVillageID(selectedVillageID)" >
+    <ion-item>
+      <ion-label stacked>Selectionnez le village</ion-label>
+      <ion-select [disabled]="!selectedCommune || selectedCommune == ''" formControlName="village" [(ngModel)]="selectedVillage" cancelText="Annuler" okText="Ok" (ionChange)="chargerSousLocalite(selectedVillage, 'village')" >
         <ion-option value="" selected disabled>Selectionnez le village</ion-option>
         <ion-option *ngFor="let villag of villages" [value]=villag.id >{{villag.nom}}</ion-option>
       </ion-select>
     </ion-item>
-
-    <ion-item *ngIf="ajoutForm">
-      <ion-label stacked>Selectionnez le village <span class="error-box">*</span></ion-label>
-      <ion-select formControlName="village" [(ngModel)]="indexSelectedVillage" cancelText="Annuler" okText="Ok" (ionChange)="chargerAutreNomVillage(indexSelectedVillage)" >
-        <ion-option value="" selected disabled>Selectionnez le village</ion-option>
-        <ion-option *ngFor="let villag of villages; let i = index" [value]=i >{{villag.nom}}</ion-option>
-      </ion-select>
-    </ion-item>
     <div style="padding-left: 15px;" class="error-box" *ngIf="membreForm.controls['village'].hasError('required') && membreForm.controls['village'].touched">* le village est obligatoir!</div>
-    
+  
     <!--ion-item *ngIf="selectedVillage" [hidden]="selectedVillage.id != 'AUTRE'">
       <ion-label floating>Nom village <span class="error-box">*</span></ion-label>
       <ion-input formControlName="village_autre" type="text"  [(ngModel)]="nom_autre_village" ></ion-input>
@@ -845,7 +853,7 @@
         </ion-col>
       </ion-row>
     </form>
-    
+    <br><br><br>
   </div>
 
   <ion-fab *ngIf="!ajoutForm && !modifierForm && !detailMembre && selectedStyle != 'tableau' && ((user && user.roles && global.estAnimataire(user.roles)) || estAnimataire)" bottom right>

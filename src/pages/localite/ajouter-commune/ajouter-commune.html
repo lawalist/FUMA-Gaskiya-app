@@ -10,7 +10,7 @@
     <ion-buttons *ngIf="liste || !gestion_pays" left>
       <button ion-button icon-only color="royal" (click)="annuler()"> Fermer <!--ion-icon name="arrow-back"></ion-icon--></button>
     </ion-buttons> 
-    <ion-buttons *ngIf="ajouter || modifier" left>
+    <ion-buttons *ngIf="(ajouter || modifier) && gestion_commune" left>
       <button ion-button icon-only color="royal" (click)="annuler()"> <ion-icon name="arrow-back"></ion-icon></button>
     </ion-buttons>
 

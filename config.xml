@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.fumagaskiya.frna" version="1.2.6" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="com.fumagaskiya.frna" version="1.3.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>FRNA</name>
     <description>App to support farmer networks</description>
     <author email="mahamanlawali09@gmail.com" href="http://fumagaskiya.ne">FUMA GASKIYA Maradi</author>
@@ -81,6 +81,9 @@
     <plugin name="cordova.plugins.diagnostic" spec="~4.0.11" />
     <plugin name="cordova-android-support-gradle-release" spec="^1.3.0">
         <variable name="ANDROID_SUPPORT_VERSION" value="24.+" />
+    </plugin>
+    <plugin name="cordova-plugin-telerik-imagepicker" spec="2.3.2">
+        <variable name="PHOTO_LIBRARY_USAGE_DESCRIPTION" value="Selectionnez une photo" />
     </plugin>
     <engine name="android" spec="6.4.0" />
 </widget>

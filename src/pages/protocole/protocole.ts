@@ -63,6 +63,8 @@ export class ProtocolePage {
   nb_repetition: any;
   avec_parcelle: any = '';
   nb_parcelle: any;
+  avec_densite: any = '';
+  nb_densite: any;
   avec_bloc: any = '';
   typologie:any = '';
   nb_bloc: any;
@@ -179,9 +181,11 @@ export class ProtocolePage {
         avec_parcelle:['non', Validators.required],
         nb_parcelle:['' ],
         avec_bloc:['non', Validators.required],
+        nb_bloc:['' ],
+        avec_densite:['non', Validators.required],
+        nb_densite:['' ],
         typologie:['non', Validators.required],
         annee_typologie:[''],
-        nb_bloc:['' ],
         //avec_code_association:['non', Validators.required],
         superficie_essais:[''],
         superficie_essais_modifiable:['non', Validators.required],
@@ -273,6 +277,7 @@ export class ProtocolePage {
       this.avec_repetition = 'non';
       this.test_varietal = 'non';
       this.avec_parcelle = 'non';
+      this.avec_densite = 'non';
       this.avec_bloc = 'non';
       this.typologie = 'non';
       this.traitement = 'oui';
@@ -435,6 +440,8 @@ export class ProtocolePage {
           this.protocole1.nb_repetition = protocole.nb_repetition;
           this.protocole1.avec_parcelle = protocole.avec_parcelle;
           this.protocole1.nb_parcelle = protocole.nb_parcelle;
+          this.protocole1.avec_densite = protocole.avec_densite;
+          this.protocole1.nb_densite = protocole.nb_densite;
           this.protocole1.avec_bloc = protocole.avec_bloc;
           this.protocole1.typologie = protocole.typologie;
           this.protocole1.annee_typologie = protocole.annee_typologie;
@@ -796,6 +803,8 @@ export class ProtocolePage {
         nb_repetition: protocole.data.nb_repetition,
         avec_parcelle: protocole.data.avec_parcelle,
         nb_parcelle: protocole.data.nb_parcelle,
+        avec_densite: protocole.data.avec_densite,
+        nb_densite: protocole.data.nb_densite,
         avec_bloc: protocole.data.avec_bloc,
         typologie:protocole.data.typologie,
         annee_typologie: protocole.data.annee_typologie,
@@ -842,6 +851,8 @@ export class ProtocolePage {
       this.nb_repetition = this.protocole1.nb_repetition;
       this.avec_parcelle = this.protocole1.avec_parcelle;
       this.nb_parcelle = this.protocole1.nb_parcelle;
+      this.avec_densite = this.protocole1.avec_densite;
+      this.nb_densite = this.protocole1.nb_densite;
       this.avec_bloc = this.protocole1.avec_bloc;
       this.typologie = this.protocole1.typologie;
       this.nb_bloc = this.protocole1.nb_bloc;
@@ -872,6 +883,7 @@ export class ProtocolePage {
     this.avec_repetition = 'non';
     this.test_varietal = 'non';
     this.avec_parcelle = 'non';
+    this.avec_densite = 'non';
     this.avec_bloc = 'non';
     this.typologie = 'non';
     this.traitement = 'oui';
@@ -909,6 +921,9 @@ export class ProtocolePage {
     if(protocole.avec_parcelle == 'oui' && (!protocole.nb_parcelle || protocole.nb_parcelle < 1)){
       msg += '\nLe nombre de parcelle doit etre non vide et supperieur à 0!'
     }
+    if(protocole.avec_densite == 'oui' && (!protocole.nb_densite || protocole.nb_densite < 1)){
+      msg += '\nLe nombre de densité doit etre non vide et supperieur à 0!'
+    }
     if(protocole.avec_repetition == 'oui' && (!protocole.nb_repetition || protocole.nb_repetition < 1)){
       msg += '\nLe nombre de répétition doit etre non vide et supperieur à 0!'
     }
@@ -931,6 +946,7 @@ export class ProtocolePage {
       this.avec_bloc = 'non';
       this.typologie = 'non';
       this.avec_parcelle = 'non';
+      this.avec_densite = 'non';
       //this.nb_repetition = 0;
       this.ajoutForm = true;
       

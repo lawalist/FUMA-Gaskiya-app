@@ -21,8 +21,12 @@ export var global = {
     },
     estAnimataire: (roles) => {
         //un admin et un moderateur sont des animataires
-        return (roles.indexOf('animataire') !== -1) || (roles.indexOf('moderateur') !== -1) || (roles.indexOf('_admin') !== -1) || (roles.indexOf('admin') !== -1)
+        return (roles.indexOf('animataire') !== -1) || (roles.indexOf('technicien') !== -1) ||  (roles.indexOf('moderateur') !== -1) || (roles.indexOf('_admin') !== -1) || (roles.indexOf('admin') !== -1)
     },
+    estTechnicien: (roles) => {
+      //un admin et un moderateur sont des animataires
+      return (roles.indexOf('technicien') !== -1) || (roles.indexOf('moderateur') !== -1) || (roles.indexOf('_admin') !== -1) || (roles.indexOf('admin') !== -1)
+  },
     peutAjouter: (roles) => {
         //tout le monde sauf les utilisateur et les personnels peuvent ajouter des essais et des membres
         return (roles.indexOf('animataire') !== -1) || (roles.indexOf('moderateur') !== -1) || (roles.indexOf('_admin') !== -1) || (roles.indexOf('admin') !== -1)

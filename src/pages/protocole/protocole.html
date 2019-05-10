@@ -337,6 +337,8 @@
         
         <ion-row> <ion-col class='meta-key'><strong>Répétition ?:</strong></ion-col> <ion-col class='meta-value'> {{protocole.data.avec_repetition}}</ion-col> </ion-row>
         <ion-row *ngIf="protocole.data.avec_repetition == 'oui'"> <ion-col class='meta-key'><strong>Nombre de répétition:</strong></ion-col> <ion-col class='meta-value'> {{protocole.data.nb_repetition}}</ion-col> </ion-row>
+        <ion-row> <ion-col class='meta-key'><strong>Densité ?:</strong></ion-col> <ion-col class='meta-value'> {{protocole.data.avec_densite}}</ion-col> </ion-row>
+        <ion-row *ngIf="protocole.data.avec_densite == 'oui'"> <ion-col class='meta-key'><strong>Nombre de densité:</strong></ion-col> <ion-col class='meta-value'> {{protocole.data.nb_densite}}</ion-col> </ion-row>
         <ion-row> <ion-col class='meta-key'><strong>Typologie ?:</strong></ion-col> <ion-col class='meta-value'> {{protocole.data.typologie}}</ion-col> </ion-row>
         <ion-row *ngIf="protocole.data.typologie == 'oui'"> <ion-col class='meta-key'><strong>Année typologie:</strong></ion-col> <ion-col class='meta-value'> {{protocole.data.annee_typologie}}</ion-col> </ion-row>
         <ion-row> <ion-col class='meta-key'><strong>Traitement:</strong></ion-col> <ion-col class='meta-value'> {{protocole.data.traitement}}</ion-col> </ion-row>
@@ -596,6 +598,23 @@
     </ion-item> 
     <div style="padding-left: 15px;" class="error-box" *ngIf="protocoleForm.controls['nb_repetition'].hasError('required') && protocoleForm.controls['nb_repetition'].touched">* le nombre de répétition est obligatoir!</div>
  
+
+    <ion-item>
+      <ion-label floating>Avec densité ? <span class="error-box">*</span></ion-label>
+      <ion-select [(ngModel)]="avec_densite" formControlName="avec_densite" cancelText="Annuler" okText="Ok">
+        <ion-option value="oui">Oui</ion-option>
+        <ion-option value="non">Non</ion-option>
+      </ion-select>
+    </ion-item>
+    <div style="padding-left: 15px;" class="error-box" *ngIf="protocoleForm.controls['avec_densite'].hasError('required') && protocoleForm.controls['avec_densite'].touched">* la densité est obligatoir!</div>
+    
+
+    <ion-item [hidden]="avec_densite == 'non'">
+      <ion-label floating>Nombre de densité <span class="error-box">*</span></ion-label>
+      <ion-input type="number" formControlName="nb_densite"></ion-input>
+    </ion-item> 
+    <div style="padding-left: 15px;" class="error-box" *ngIf="protocoleForm.controls['nb_densite'].hasError('required') && protocoleForm.controls['nb_densite'].touched">* le nombre de densité est obligatoir!</div>
+
     <ion-item>
       <ion-label floating>Test variétal ? <span class="error-box">*</span></ion-label>
       <ion-select [(ngModel)]="test_varietal" formControlName="test_varietal" cancelText="Annuler" okText="Ok">

@@ -44,9 +44,9 @@ export class AjouterVillagePage {
       this.ajouter = false;
     }
     
-    if(this.navParams.data.id_commune){
-      this.id_commune = this.navParams.data.id_commune;
-      this.nom_commune = this.navParams.data.nom_commune;
+    if(this.navParams.data.communeID){
+      this.id_commune = this.navParams.data.communeID;
+      //this.nom_commune = this.navParams.data.nom_commune;
       this.commune_defini = true;
     }
     
@@ -68,6 +68,14 @@ export class AjouterVillagePage {
 
      this.servicePouchdb.getDocById('commune').then((communes) => {
           this.allCommune = communes.data;
+          if(this.id_commune){
+            for(let i = 0; i < this.allCommune.length; i++){
+              if(this.allCommune[i].id == this.id_commune){
+                this.nom_commune = this.allCommune[i].nom;
+                break;
+              }
+            }
+          }
         });
   }
 

@@ -43,9 +43,9 @@ export class AjouterCommunePage {
       this.ajouter = false;
     }
 
-    if(this.navParams.data.id_departement){
-      this.id_departement = this.navParams.data.id_pays;
-      this.nom_departement = this.navParams.data.nom_departement;
+    if(this.navParams.data.departementID){
+      this.id_departement = this.navParams.data.departementID;
+      //this.nom_departement = this.navParams.data.nom_departement;
       this.departement_defini = true;
     }
     
@@ -67,6 +67,14 @@ export class AjouterCommunePage {
 
       this.servicePouchdb.getDocById('departement').then((departement) => {
           this.allDepartement = departement.data;
+          if(this.id_departement){
+            for(let i = 0; i < this.allDepartement.length; i++){
+              if(this.allDepartement[i].id == this.id_departement){
+                this.nom_departement = this.allDepartement[i].nom;
+                break;
+              }
+            }
+          }
         });
 
   }

@@ -44,9 +44,9 @@ export class AjouterRegionPage {
       this.ajouter = false;
     }
 
-    if(this.navParams.data.id_pays){
-      this.id_pays = this.navParams.data.id_pays;
-      this.nom_pays = this.navParams.data.nom_pays;
+    if(this.navParams.data.paysID){
+      this.id_pays = this.navParams.data.paysID;
+      //this.nom_pays = this.navParams.data.nom_pays;
       this.pays_defini = true;
     }
     
@@ -67,6 +67,14 @@ export class AjouterRegionPage {
 
        this.servicePouchdb.getDocById('pays').then((pays) => {
           this.allPays = pays.data;
+          if(this.id_pays){
+            for(let i = 0; i < this.allPays.length; i++){
+              if(this.allPays[i].id == this.id_pays){
+                this.nom_pays = this.allPays[i].nom;
+                break;
+              }
+            }
+          }
         });
 
   }

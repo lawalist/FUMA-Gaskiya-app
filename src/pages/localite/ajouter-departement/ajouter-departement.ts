@@ -43,9 +43,9 @@ export class AjouterDepartementPage {
       this.ajouter = false;
     }
 
-    if(this.navParams.data.id_region){
-      this.id_region = this.navParams.data.id_region;
-      this.nom_region = this.navParams.data.nom_region;
+    if(this.navParams.data.regionID){
+      this.id_region = this.navParams.data.regionID;
+      //this.nom_region = this.navParams.data.nom_region;
       this.region_defini = true;
     }
     
@@ -67,6 +67,14 @@ export class AjouterDepartementPage {
 
      this.servicePouchdb.getDocById('region').then((regions) => {
           this.allRegion = regions.data;
+          if(this.id_region){
+            for(let i = 0; i < this.allRegion.length; i++){
+              if(this.allRegion[i].id == this.id_region){
+                this.nom_region = this.allRegion[i].nom;
+                break;
+              }
+            }
+          }
         });
   }
 

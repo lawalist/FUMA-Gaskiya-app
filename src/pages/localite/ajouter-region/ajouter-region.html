@@ -7,10 +7,10 @@
 <ion-header>
 
   <ion-navbar color="fuma_primary">
-    <ion-buttons *ngIf="liste || !gestion_pays" left>
+    <ion-buttons *ngIf="liste || !gestion_region" left>
       <button ion-button icon-only color="royal" (click)="annuler()"> Fermer <!--ion-icon name="arrow-back"></ion-icon--></button>
     </ion-buttons> 
-    <ion-buttons *ngIf="ajouter || modifier" left>
+    <ion-buttons *ngIf="(ajouter || modifier) && gestion_region" left>
       <button ion-button icon-only color="royal" (click)="annuler()"> <ion-icon name="arrow-back"></ion-icon></button>
     </ion-buttons>
 

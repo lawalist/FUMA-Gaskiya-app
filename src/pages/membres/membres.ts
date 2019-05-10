@@ -59,10 +59,10 @@ export class MembresPage {
   recherche: any;
 
   membreForm: any;
-  villages: any = [];
+  //villages: any = [];
   ops: any = [];
   classes: any = [];
-  selectedVillage: any;
+  //selectedVillage: any;
   selectedOP: any;
   selectedClasse: any;
   membreApplication: any = [];
@@ -70,15 +70,33 @@ export class MembresPage {
   allUnion: any = [] ;
   imei: any = '';
   phonenumber: any = '';
+
+  pays: any = [];
+  autrePays: any = {'id':'AUTRE', 'nom':'Autre'};
+  selectedPays: any;
+  regions: any = [];
+  autreRegion: any = {'id':'AUTRE', 'nom':'Autre'};
+  selectedRegion: any;
+  departements: any = [];
+  autreDepartement: any = {'id':'AUTRE', 'nom':'Autre'};
+  selectedDepartement: any;
+  communes: any = [];
+  autreCommune: any = {'id':'AUTRE', 'nom':'Autre'};
+  selectedCommune: any;
+  villages: any = [];
   autreVillage: any = {'id':'AUTRE', 'nom':'Autre'};
+  nom_autre_village: any = '';
+  selectedVillage: any;
+
+  //autreVillage: any = {'id':'AUTRE', 'nom':'Autre'};
   autreOP: any = {"data": {'num_aggrement':'AUTRE', 'nom_OP':'Autre', 'code_OP':'AUTRE'}};
   autreClasse: any = {"data": {'id':'AUTRE', 'nom':'Autre'}};
-  nom_autre_village: any = '';
+  //nom_autre_village: any = '';
   nom_autre_op: any = '';
   nom_autre_classe: any = '';
   matricule: any = '';
   nom:any = '';
-  public base64Image: string;
+  public base64Image: any;
   public showCamera = true;
   estInitierMemebre: boolean = false;
   //instanceID: string;
@@ -100,7 +118,7 @@ export class MembresPage {
   membre: any = {} ;
 
 
-  pays: any;
+  //pays: any;
   pays_nom: any;
   pays_autre: any;
   region: any;
@@ -331,6 +349,17 @@ export class MembresPage {
 
   }*/
 
+  reinitVar(){
+    this.selectedPays = '';
+    this.selectedRegion = '';
+    this.selectedDepartement = '';
+    this.selectedCommune = '';
+    this.selectedVillage = '';
+    //this.selectedFederation = '';
+    //this.nom_membre = '';
+    //this.code_membre = '';
+    //this.pour_federation = 'oui';
+  }
   partager(membre){
     //let ids: any = [];
     //ids.push(_id);
@@ -561,20 +590,20 @@ export class MembresPage {
 
 
   chargerConfLocaliter(loc){
-    this.pays = loc.pays.id;
-    this.pays_nom = loc.pays.nom;
+    this.selectedPays = loc.pays.id;
+    //this.pays_nom = loc.pays.nom;
     //this.pays_autre = loc.pays_autre;
-    this.region = loc.region.id;
-    this.region_nom = loc.region.nom;
+    this.selectedRegion = loc.region.id;
+    //this.region_nom = loc.region.nom;
     //this.region_autre = loc.region_autre;
-    this.departement = loc.departement.id;
-    this.departement_nom = loc.departement.nom;
+    this.selectedDepartement = loc.departement.id;
+    //this.departement_nom = loc.departement.nom;
     //this.departement_autre = loc.departement_autre;
-    this.commune = loc.commune.id, Validators.required;
-    this.commune_nom = loc.commune.nom;
+    this.selectedCommune = loc.commune.id, Validators.required;
+    //this.commune_nom = loc.commune.nom;
     //this.commune_autre = loc.commune_autre;
 
-    this.chargerVillages(loc.commune.id);
+    //this.chargerVillages(loc.commune.id);
   }
 
   setDate(age){
@@ -919,15 +948,52 @@ export class MembresPage {
   }
 
    actionForm(){
+
+    let date = new Date();
+    let membre = this.membreForm.value;
+    //membre.pays = this.selectedPays;
+    for(let i = 0; i < this.pays.length; i++){
+      if(this.pays[i].id == this.selectedPays){
+        membre.pays_nom = this.pays[i].nom;
+        break;
+      }
+    }
+    
+    //membre.region = this.selectedRegion.id;
+    for(let i = 0; i < this.regions.length; i++){
+      if(this.regions[i].id == this.selectedRegion){
+        membre.region_nom = this.regions[i].nom;
+        break;
+      }
+    }
+    //membre.departement = this.selectedDepartement.id;
+    for(let i = 0; i < this.departements.length; i++){
+      if(this.departements[i].id == this.selectedDepartement){
+        membre.departement_nom = this.departements[i].nom;
+        break;
+      }
+    }
+    //membre.commune = this.selectedCommune.id;
+    for(let i = 0; i < this.communes.length; i++){
+      if(this.communes[i].id == this.selectedCommune){
+        membre.commune_nom = this.communes[i].nom;
+        break;
+      }
+    }
+    //membre.village = this.selectedVillage.id;
+    for(let i = 0; i < this.villages.length; i++){
+      if(this.villages[i].id == this.selectedVillage){
+        membre.village_nom = this.villages[i].nom;
+        break;
+      }
+    }
      if(this.ajoutForm){
-       let date = new Date();
-        let membre = this.membreForm.value;
 
         if(this.verifierUniqueMatricule(membre) === 0){
           alert('Le matricule du membre doit être unique!');
         }else{
-          membre.village = this.selectedVillage.id;
-          membre.village_nom = this.selectedVillage.nom;
+          //membre.village = this.selectedVillage.id;
+          //membre.village_nom = this.selectedVillage.nom;
           if(!this.num_aggrement_op){
             membre.op = this.selectedOP.data.num_aggrement;
             membre.op_nom = this.selectedOP.data.nom_OP;
@@ -1007,6 +1073,7 @@ export class MembresPage {
                   this.photo = null;
 
                   this.detail(m, false)
+                  this.reinitVar()
                   //this.membre = m;
                   //this.detailMembre = true;
                   //this.viewCtrl.dismiss(m)
@@ -1014,7 +1081,7 @@ export class MembresPage {
                 
           
               }else{
-                m.photo = 'assets/images/no-photo.png';
+                m.photo = this.sanitizer.bypassSecurityTrustUrl('assets/images/no-photo.png');
                 this.membres.push(m);
                 //this.allMembres.push(m);
                 this.allMembres1.push(m);
@@ -1026,6 +1093,7 @@ export class MembresPage {
                 this.date_naissance = '';
                 this.photo = null;
                 this.detail(m, false)
+                this.reinitVar()
                 //this.detailMembre = true;
                 //this.viewCtrl.dismiss(m)
               }
@@ -1037,7 +1105,7 @@ export class MembresPage {
 
      }else if(this.modifierForm){
 
-      let membre = this.membreForm.value;
+      //let membre = this.membreForm.value;
       if(this.membre1.op !== this.ancien_OP && this.verifierUniqueMatricule(membre) === 0){
         alert('Le matricule du membre doit être unique!');
       }else{
@@ -1060,9 +1128,19 @@ export class MembresPage {
         //this.membre1.classe = membre.classe;
         //this.membre1.classe_nom = membre.classe_nom;
         //this.membre1.classe_autre = membre.classe_autre;
+        //this.membre1.village = membre.village;
+        //this.membre1.village_nom = membre.village_nom;
+        //this.membre1.village_autre = membre.village_autre;
+        this.membre1.pays = membre.pays;
+        this.membre1.pays_nom = membre.pays_nom;
+        this.membre1.region = membre.region;
+        this.membre1.region_nom = membre.region_nom;
+        this.membre1.departement = membre.departement;
+        this.membre1.departement_nom = membre.departement_nom;
+        this.membre1.commune = membre.commune;
+        this.membre1.commune_nom = membre.commune_nom;
         this.membre1.village = membre.village;
         this.membre1.village_nom = membre.village_nom;
-        this.membre1.village_autre = membre.village_autre;
         //this.membre1.op = membre.op;
         //this.membre1.op_nom = membre.op_nom; 
         //this.membre1.code_union = membre.code_union; 
@@ -1073,12 +1151,16 @@ export class MembresPage {
           this.membre1.photoID = ida;
         }
 
-        this.villages.forEach((v, i) => {
+        if(this.photoID && !this.photo){
+          this.membre1.photoID = null;
+        }
+
+        /*this.villages.forEach((v, i) => {
           if(v.id === this.selectedVillageID){
             this.membre1.village = v.id;
             this.membre1.village_nom = v.nom;
           }
-        });
+        });*/
     
         //en cas de changement d'op
         if(this.membre1.op !== this.ancien_OP){
@@ -1179,6 +1261,7 @@ export class MembresPage {
             });
 
             this.reinitForm();
+            this.reinitVar()
             //toast.present();
             }).catch((err) => alert('erreur mise à jour photo: '+err));
 
@@ -1189,6 +1272,48 @@ export class MembresPage {
             }*/
             
           // this.reinitForm();
+          }else if(this.photoID && !this.photo){
+            //cas d'une suppression
+            this.servicePouchdb.removeAtachement(this.photoID);
+            this.grandMembre.photo = this.sanitizer.bypassSecurityTrustUrl('assets/images/no-photo.png');
+              this.grandMembre.photoDocId = null;
+              this.grandMembre.photoDocRev = null
+              this.membre = this.grandMembre;
+
+              this.modifierForm = false;
+              this.ajoutForm = false;
+              //this.detailMembre = true;
+              if(actu_ch_es){
+                this.detail(this.grandMembre, true);
+                actu_ch_es = false;
+              }else{
+                this.detail(this.grandMembre, false)
+              }
+
+              
+              this.membres.forEach((m, i) => {
+                if(m.doc._id === this.membre.doc._id){
+                  this.membres[i] = this.membre;
+                  //this.allMembres = this.membres;
+                }
+              });
+
+              this.allMembres.forEach((m, i) => {
+                if(m.doc._id === this.membre.doc._id){
+                  this.allMembres[i] = this.membre;
+                  //this.allMembres = this.membres;
+                }
+              });
+
+              this.allMembres1.forEach((m, i) => {
+                if(m.doc._id === this.membre.doc._id){
+                  this.allMembres1[i] = this.membre;
+                  //this.allMembres = this.membres;
+                }
+              });
+
+              this.reinitForm();
+              this.reinitVar()
           }else if(!this.photoID && this.imageData){
            
             //creation
@@ -1225,9 +1350,11 @@ export class MembresPage {
             //this.detail(this.grandMembre, this.selectedSource)
             if(actu_ch_es){
                 this.detail(this.grandMembre, true);
+                this.reinitVar()
                 actu_ch_es = false;
               }else{
                 this.detail(this.grandMembre, false)
+                this.reinitVar()
               }
             /*this.membre = this.grandMembre;
             
@@ -1269,6 +1396,7 @@ export class MembresPage {
             });
             //toast.present();
             this.reinitForm();
+            this.reinitVar()
           });
 
           /*if(actu_ch_es){
@@ -1287,9 +1415,11 @@ export class MembresPage {
             //this.detail(this.grandMembre, this.selectedSource)
             if(actu_ch_es){
                 this.detail(this.grandMembre, true);
+                this.reinitVar()
                 actu_ch_es = false;
               }else{
                 this.detail(this.grandMembre, false)
+                this.reinitVar()
               }
             /*
             var membreID=this.membre.doc.data.matricule_Membre || 'pending';
@@ -1336,6 +1466,7 @@ export class MembresPage {
             }*/
 
             this.reinitForm();
+            this.reinitVar()
 
             
             //toast.present();
@@ -1644,7 +1775,7 @@ export class MembresPage {
           alert('Erreur! \n\nSeule les images de type jpeg et png sont autorisées!')
           this.clearFile();
         }else{
-          this.imageData = reader.result.split(',')[1];
+          this.imageData = reader.result.toString().split(',')[1];
           this.base64Image = reader.result;//.split(',')[1];
           this.photo = this.base64Image ;
         }
@@ -1657,7 +1788,7 @@ export class MembresPage {
     this.fileInput = '';
     this.imageData = null //.slice(',')[1];
     this.base64Image = null//.split(',')[1];
-    this.photo = this.sanitizer.bypassSecurityTrustUrl('assets/images/no-photo.png') ;
+    this.photo = null//this.sanitizer.bypassSecurityTrustUrl('assets/images/no-photo.png') ;
   }
 
 
@@ -2014,98 +2145,109 @@ chargerOp(){
 
       alt.present();
       //alert('Impossible d\'éffectuer cette opération, le code de la strucutre n\'est pas encore défini!\nVeuillez le définir dans options => Admin');
-    }else
-    if(this.confLocaliteEnquete){
-
-      this.pourCreerForm();
-
-      let maDate = new Date();
-      let today = this.createDate(maDate.getDate(), maDate.getMonth(), maDate.getFullYear());
-
-      this.today = today;
-      this.max_date = maDate.getFullYear() - 15;
-      //this.max_date = this.createDate(1, 0, maxAnnee);
-
-
-      this.chargerConfLocaliter(this.confLocaliteEnquete)
-      if(this.num_aggrement_op){
-        this.matricule = this.generateId(this.code_op);
-      }
-
-      this.ajoutForm = true;
-     /* if(this.num_aggrement_op){
-        //this.navCtrl.push('AjouterMembrePage', {'confLocaliteEnquete': confLocaliteEnquete, 'num_aggrement_op': this.num_aggrement_op, 'nom_op': this.nom_op, 'code_op': this.code_op});
-        let model = this.modelCtl.create('AjouterMembrePage', {'confLocaliteEnquete': confLocaliteEnquete, 'num_aggrement_op': this.num_aggrement_op, 'nom_op': this.nom_op, 'code_op': this.code_op})
-        model.onDidDismiss(membre => {
-          if (membre) {
-          // this.allEssais.push(essai);
-            this.zone.run(() => {
-              this.membres.push(membre);
-              this.allMembres = this.membres;
-              //this.events.publish('ajout-essai', {'essai': essai});
-            });
-            
-            
-          }
-        });
-        model.present();
     }else{
-        //this.navCtrl.push('AjouterMembrePage', {'confLocaliteEnquete': confLocaliteEnquete});
-        //this.zone
-         let model = this.modelCtl.create('AjouterMembrePage', {'confLocaliteEnquete': confLocaliteEnquete})
+      this.chargerPays();
+      if(this.confLocaliteEnquete && this.confLocaliteEnquete != ''){
+        this.chargerSousLocalite(this.confLocaliteEnquete.pays.id, 'pays')
+        this.chargerSousLocalite(this.confLocaliteEnquete.region.id, 'region')
+        this.chargerSousLocalite(this.confLocaliteEnquete.departement.id, 'departement')
+        this.chargerSousLocalite(this.confLocaliteEnquete.commune.id, 'commune')
+        this.chargerConfLocaliter(this.confLocaliteEnquete)
+        this.membreForm.controls.pays.setValue(this.confLocaliteEnquete.pays.id);
+        this.membreForm.controls.region.setValue(this.confLocaliteEnquete.region.id);
+        this.membreForm.controls.departement.setValue(this.confLocaliteEnquete.departement.id);
+        this.membreForm.controls.commune.setValue(this.confLocaliteEnquete.commune.id);
+      }
+        this.pourCreerForm();
+
+        let maDate = new Date();
+        let today = this.createDate(maDate.getDate(), maDate.getMonth(), maDate.getFullYear());
+
+        this.today = today;
+        this.max_date = maDate.getFullYear() - 15;
+        //this.max_date = this.createDate(1, 0, maxAnnee);
+
+
+        
+        if(this.num_aggrement_op){
+          this.matricule = this.generateId(this.code_op);
+        }
+
+        this.ajoutForm = true;
+      /* if(this.num_aggrement_op){
+          //this.navCtrl.push('AjouterMembrePage', {'confLocaliteEnquete': confLocaliteEnquete, 'num_aggrement_op': this.num_aggrement_op, 'nom_op': this.nom_op, 'code_op': this.code_op});
+          let model = this.modelCtl.create('AjouterMembrePage', {'confLocaliteEnquete': confLocaliteEnquete, 'num_aggrement_op': this.num_aggrement_op, 'nom_op': this.nom_op, 'code_op': this.code_op})
           model.onDidDismiss(membre => {
             if (membre) {
-              //this.allEssais.push(essai);
+            // this.allEssais.push(essai);
               this.zone.run(() => {
                 this.membres.push(membre);
                 this.allMembres = this.membres;
-                //this.allEssais.push(essai);
+                //this.events.publish('ajout-essai', {'essai': essai});
               });
+              
               
             }
           });
           model.present();
-     
-    }*/
+      }else{
+          //this.navCtrl.push('AjouterMembrePage', {'confLocaliteEnquete': confLocaliteEnquete});
+          //this.zone
+          let model = this.modelCtl.create('AjouterMembrePage', {'confLocaliteEnquete': confLocaliteEnquete})
+            model.onDidDismiss(membre => {
+              if (membre) {
+                //this.allEssais.push(essai);
+                this.zone.run(() => {
+                  this.membres.push(membre);
+                  this.allMembres = this.membres;
+                  //this.allEssais.push(essai);
+                });
+                
+              }
+            });
+            model.present();
       
-    }else{
-      let alert = this.alertCtl.create({
-        title: 'Erreur',
-        message: 'Vous devez d\'abord définir la configuration de la localité à enquêtée!',
-        buttons: [
-          {
-            text: 'Définir localité',
-            handler:  () => {
-              let model = this.modelCtl.create('ConfLocaliteEnquetePage');
-              model.present();
+      }*/
+        
+      
+    /****}else{
+        let alert = this.alertCtl.create({
+          title: 'Erreur',
+          message: 'Vous devez d\'abord définir la configuration de la localité à enquêtée!',
+          buttons: [
+            {
+              text: 'Définir localité',
+              handler:  () => {
+                let model = this.modelCtl.create('ConfLocaliteEnquetePage');
+                model.present();
 
-              model.onDidDismiss((confLocaliteEnquete) => {
-                if(confLocaliteEnquete){
-                    this.confLocaliteEnquete = confLocaliteEnquete;
-                    this.ajouter();
-                    //this.ajoutForm = true;
-                  }else{
-                    this.ajoutForm = false;
-                  }
-                /*this.storage.get('confLocaliteEnquete').then((confLocaliteEnquete) => {
+                model.onDidDismiss((confLocaliteEnquete) => {
                   if(confLocaliteEnquete){
-                    this.confLocaliteEnquete = confLocaliteEnquete;
-                  }
-                })*/
-              })
-              //this.navCtrl.push('ConfLocaliteEnquetePage');
-            }        
-          },
-          {
-            text: 'Annuler',
-            handler: () => console.log('annuler')
-          }
-        ]
-      });
+                      this.confLocaliteEnquete = confLocaliteEnquete;
+                      this.ajouter();
+                      //this.ajoutForm = true;
+                    }else{
+                      this.ajoutForm = false;
+                    }
+                  /*this.storage.get('confLocaliteEnquete').then((confLocaliteEnquete) => {
+                    if(confLocaliteEnquete){
+                      this.confLocaliteEnquete = confLocaliteEnquete;
+                    }
+                  })******
+                })
+                //this.navCtrl.push('ConfLocaliteEnquetePage');
+              }        
+            },
+            {
+              text: 'Annuler',
+              handler: () => console.log('annuler')
+            }
+          ]
+        });
 
-      alert.present();
-    }
-    
+        alert.present();
+      }*/
+    } 
   }
 
   detail(membre, selectedSource){
@@ -2577,6 +2719,7 @@ chargerOp(){
       if(!global.config_app.code_structure){
         alert('Impossible d\'éffectuer cette opération, le code de la strucutre n\'est pas encore défini!\nVeuillez le définir dans options => Admin');
       }else{
+        
         this.grandMembre = membre;
         this.photoID = this.grandMembre.photoDocId;
         this.photoRev = this.grandMembre.photoDocRev;
@@ -2600,6 +2743,12 @@ chargerOp(){
           this.age = '';
           this.date_naissance = '';
         }
+        this.chargerPays();
+        this.chargerSousLocalite(this.membre1.pays, 'pays')
+        this.chargerSousLocalite(this.membre1.region, 'region')
+        this.chargerSousLocalite(this.membre1.departement, 'departement')
+        this.chargerSousLocalite(this.membre1.commune, 'commune')
+        
         this.selectedOPID = this.membre1.op;
         this.ancienSelectedOPID = this.membre1.op;
         this.selectedVillageID = this.membre1.village;
@@ -2625,7 +2774,13 @@ chargerOp(){
         this.genre = this.membre1.genre;
         this.today = this.membre1.today;
 
-        this.pays = this.membre1.pays;
+        this.selectedPays = this.membre1.pays;
+        this.selectedRegion = this.membre1.region
+        this.selectedDepartement = this.membre1.departement;
+        this.selectedCommune = this.membre1.commune;
+        this.selectedVillage = this.membre1.village;
+
+        /*this.pays = this.membre1.pays;
         this.pays_nom = this.membre1.pays_nom;
         //this.pays_autre = loc.pays_autre;
         this.region = this.membre1.region;
@@ -2635,10 +2790,11 @@ chargerOp(){
         this.departement_nom = this.membre1.departement_nom;
         //this.departement_autre = loc.departement_autre;
         this.commune = this.membre1.commune;
-        this.commune_nom = this.membre1.commune_nom;
+        this.commune_nom = this.membre1.commune_nom;*/
         //this.commune_autre = loc.commune_autre;
 
-        this.chargerVillages(this.membre1.commune);
+        //this.chargerVillages(this.membre1.commune);
+        
 
         /*if(this.membre1.village_autre){
             this.nom_autre_village = this.membre1.village_autre;
@@ -2765,6 +2921,158 @@ chargerOp(){
     });
   }
 
+
+  
+  chargerPays(){
+    this.servicePouchdb.getDocById('pays').then((results) => {
+        this.pays = results.data;
+        if(this.user && this.user.roles && global.estManager(this.user.roles)){
+          this.pays.push(this.autrePays);
+        }
+    }).catch((err) => {
+      console.log('error pays')
+      if(this.user && this.user.roles && global.estManager(this.user.roles)){
+        this.pays.push(this.autrePays);
+      }
+    });
+  }
+
+  chargerSousLocalite(localiteID, type){
+    if(localiteID !== 'AUTRE'){
+      let sous_type = 'village';
+      if(type == 'pays'){
+       sous_type = 'region';
+      }else if(type == 'region'){
+       sous_type = 'departement';
+      }else if(type == 'departement'){
+       sous_type = 'commune';
+      }
+
+      //réinitialser les sous localités de la cocalité
+      this.reinitSousLocalite(type);
+
+      this.servicePouchdb.getDocById(sous_type).then((results) => {
+        //charger les sous localité correpondantes
+        results.data.forEach((res, index) => {
+          if(type == 'pays' && res.id_pays === localiteID){
+              this.regions.push(res);
+          }else if(type == 'region' && res.id_region === localiteID){
+              this.departements.push(res);
+          }else if(type == 'departement' && res.id_departement === localiteID){
+              this.communes.push(res);
+          }if(type == 'commune' && res.id_commune === localiteID){
+              this.villages.push(res);
+          }
+          
+        });
+
+        //ajouter l'option autre pour l'administratuer seul
+        if(this.user && this.user.roles && global.estManager(this.user.roles)){
+          if(type == 'pays'){
+            this.regions.push(this.autreRegion);
+          }else if(type == 'region'){
+            this.departements.push(this.autreDepartement);
+          }else if(type == 'departement'){
+            this.communes.push(this.autreCommune);
+          }else if(type == 'commune'){
+            this.villages.push(this.autreVillage);
+          }
+        }
+        
+      }).catch((err) => {
+        if(this.user && this.user.roles && global.estManager(this.user.roles)){
+          if(type == 'pays'){
+            this.regions.push(this.autreRegion);
+          }else if(type == 'region'){
+            this.departements.push(this.autreDepartement);
+          }else if(type == 'departement'){
+            this.communes.push(this.autreCommune);
+          }else if(type == 'commune'){
+            this.villages.push(this.autreVillage);
+          }
+        }
+      });
+    }else{
+      this.autreLocalite(localiteID, type);
+    }
+  } 
+
+  autreLocalite(localiteID, type){
+    if(localiteID == 'AUTRE'){
+         if(type == 'pays'){
+        let model = this.modelCtl.create('AjouterPaysPage');
+        model.present();
+        model.onDidDismiss(() => {
+          this.selectedPays = '';
+          this.chargerPays();
+          
+        })
+      }else if(type == 'region'){
+        let model = this.modelCtl.create('AjouterRegionPage', {'paysID': this.selectedPays});
+        model.present();
+        model.onDidDismiss(() => {
+          this.selectedRegion = '';
+          this.chargerSousLocalite(this.selectedPays, 'pays');
+          
+        })
+      }else if(type == 'departement'){
+        let model = this.modelCtl.create('AjouterDepartementPage', {'regionID':this.selectedRegion});
+        model.present();
+        model.onDidDismiss(() => {
+          this.selectedDepartement = '';
+          this.chargerSousLocalite(this.selectedRegion, 'region');
+          
+        })
+      }else if(type == 'commune'){
+        let model = this.modelCtl.create('AjouterCommunePage', {'departementID': this.selectedDepartement});
+        model.present();
+        model.onDidDismiss(() => {
+          this.selectedCommune = '';
+          this.chargerSousLocalite(this.selectedDepartement, 'departement');
+          
+        })
+      }else if(type == 'village'){
+        let model = this.modelCtl.create('AjouterVillagePage', {'communeID': this.selectedCommune});
+        model.present();
+        model.onDidDismiss(() => {
+          this.selectedVillage = '';
+          this.chargerSousLocalite(this.selectedCommune, 'commune');
+          
+        })
+      }
+      
+      this.nom_autre_village = '';
+    }
+  }
+  
+
+  reinitSousLocalite(type){
+    if(type == 'pays'){
+      this.selectedRegion = '';
+      this.regions = []
+      this.selectedDepartement = '';
+      this.departements = []
+      this.selectedCommune = '';
+      this.communes = []
+      this.selectedVillage = '';
+      this.villages = []
+    } else if(type == 'region'){
+      this.selectedDepartement = '';
+      this.departements = []
+      this.selectedCommune = '';
+      this.communes = []
+      this.selectedVillage = '';
+      this.villages = []
+    }else if(type == 'departement'){
+      this.selectedCommune = '';
+      this.communes = []
+      this.selectedVillage = '';
+      this.villages = []
+    }else if(type == 'commune'){
+      this.selectedVillage = '';
+      this.villages = []
+    }
+  }
 
 
   mesEssai(matricule, nom, membre){
